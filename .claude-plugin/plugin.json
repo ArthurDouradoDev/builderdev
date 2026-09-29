@@ -1,0 +1,5 @@
+{
+  "name": "betterdev",
+  "version": "0.1.0",
+  "description": "Planos por fases com status derivado do git, memória com índice gerado e hooks que mantêm o contexto da sessão enxuto."
+}
