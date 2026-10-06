@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { delimiter, join, relative, resolve, sep } from 'node:path';
+import { basename, delimiter, join, relative, resolve, sep } from 'node:path';
 import { parseArgs } from 'node:util';
 import pkg from '../package.json' with { type: 'json' };
 import { prepareCommitMsg } from './commit-msg';
 import { installHook, uninstallHook } from './git/hooks-install';
 import { GitError, readPlanSteps } from './git/log';
 import { init } from './init';
+import { newEntry } from './memory/entry';
+import { isEntryPath, lintClaudeMd, lintMemory, trackOfPath } from './memory/lint';
+import { formatRecall, parseTerms, recall } from './memory/recall';
+import { INDEX_MAX_LINES, reindex } from './memory/reindex';
 import { brief } from './plan/brief';
 import { PLANS_DIR, ProjectError, findPlan, findProjectRoot, listPlans, parsePhaseRef } from './plan/find';
 import { formatReport, lintPlanFile, type FileReport } from './plan/lint';
@@ -16,8 +20,13 @@ import { clearState, readState, startPhase } from './state';
 const USAGE = `uso: betterdev <comando> [opções]
 
 comandos:
-  lint [caminhos...]          valida planos (padrão: .dev/plans/*.md); sai com 1 se houver erro
+  lint [caminhos...]          valida planos, entradas de memory/ e errors/ e o .dev/CLAUDE.md
+                              (padrão: o projeto inteiro); sai com 1 se houver erro
   init [pasta]                cria a estrutura .dev/ no projeto (padrão: pasta atual)
+  entry new --track conhecimento|bug --slug <slug>
+                              cria a entrada em .dev/memory/ ou .dev/errors/, pronta para preencher
+  reindex                     gera .dev/memory/index.md e .dev/errors/index.md a partir do frontmatter
+  recall <termos...> [--full] busca entradas pelo frontmatter; --full imprime as 3 primeiras inteiras
   status [plano] [--json]     status de cada fase, derivado dos commits com o trailer Plan-Step
          [--all]              considera commits de todas as branches, não só de HEAD
   start <plano>/<fase>        grava a fase ativa em .dev/.local/state.json
@@ -38,34 +47,40 @@ const commands: Record<string, Command> = {
   lint(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     const cwd = process.cwd();
-    const targets = positionals.length ? positionals : [join('.dev', 'plans')];
+    const root = findProjectRoot(cwd);
+    const mdFiles = (dir: string) => readdirSync(dir).filter((f) => f.endsWith('.md')).sort().map((f) => join(dir, f));
 
-    const files: string[] = [];
+    // Sem argumentos: planos, entradas de memória, orçamento dos índices e .dev/CLAUDE.md do projeto.
+    const plans: string[] = [];
+    const entries: string[] = [];
+    const claudeMds: string[] = [];
     let missing = 0;
-    for (const target of targets) {
+    if (!positionals.length && existsSync(join(root, PLANS_DIR))) plans.push(...mdFiles(join(root, PLANS_DIR)));
+    for (const target of positionals) {
       const abs = resolve(cwd, target);
       if (!existsSync(abs)) {
-        if (positionals.length) {
-          console.error(`betterdev lint: caminho não encontrado: ${target}`);
-          missing++;
-        }
+        console.error(`betterdev lint: caminho não encontrado: ${target}`);
+        missing++;
         continue;
       }
-      if (statSync(abs).isDirectory()) {
-        files.push(...readdirSync(abs).filter((f) => f.endsWith('.md')).sort().map((f) => join(abs, f)));
-      } else {
-        files.push(abs);
+      for (const file of statSync(abs).isDirectory() ? mdFiles(abs) : [abs]) {
+        if (isEntryPath(file)) entries.push(file);
+        else if (trackOfPath(file)) continue; // index.md gerado
+        else if (basename(file) === 'CLAUDE.md') claudeMds.push(file);
+        else plans.push(file);
       }
     }
-    if (!files.length) {
-      if (!missing) console.log('nenhum plano encontrado');
+
+    const reports: FileReport[] = [
+      ...plans.map((file) => ({ file, problems: lintPlanFile(file) })),
+      ...(positionals.length ? (entries.length ? lintMemory(root, entries) : []) : lintMemory(root)),
+      ...claudeMds.map((file) => ({ file, problems: lintClaudeMd(file) })),
+    ].map((r) => ({ ...r, file: relative(cwd, r.file).split(sep).join('/') }));
+    if (!reports.length) {
+      if (!missing) console.log('nada a validar: nenhum plano nem entrada de memória encontrado');
       return missing ? 1 : 0;
     }
 
-    const reports: FileReport[] = files.map((file) => ({
-      file: relative(cwd, file).split(sep).join('/'),
-      problems: lintPlanFile(file),
-    }));
     console.log(formatReport(reports));
     const failed = reports.some((r) => r.problems.some((p) => p.severity === 'erro'));
     return failed || missing ? 1 : 0;
@@ -137,6 +152,42 @@ const commands: Record<string, Command> = {
     const ref = positionals[0] ? parsePhaseRef(positionals[0]) : readState(root);
     if (!ref) throw new ProjectError('nenhuma fase ativa: use betterdev start <plano>/<fase> ou betterdev brief <plano>/<fase>');
     process.stdout.write(brief(findPlan(root, ref.plan), ref.phase));
+    return 0;
+  },
+
+  reindex(args) {
+    parseArgs({ args, allowPositionals: false, options: {} });
+    const results = reindex(findProjectRoot());
+    if (!results.length) throw new ProjectError('nem .dev/memory nem .dev/errors existem: rode betterdev init');
+    let failed = false;
+    for (const r of results) {
+      const count = `${r.entries} ${r.entries === 1 ? 'entrada' : 'entradas'}`;
+      console.log(`${(r.changed ? 'atualizado' : 'sem mudança').padEnd(12)}${r.path} (${count})`);
+      for (const s of r.skipped) console.error(`aviso: ${s.message} em ${relative(process.cwd(), s.path).split(sep).join('/')}:${s.line}; a entrada ficou fora do índice`);
+      if (r.overBudget) {
+        console.error(`erro: ${r.path} tem ${r.lines} linhas (máximo ${INDEX_MAX_LINES}): funda ou remova entradas`);
+        failed = true;
+      }
+    }
+    return failed ? 1 : 0;
+  },
+
+  entry(args) {
+    const [sub, ...rest] = args;
+    if (sub !== 'new') throw new UsageError('uso: betterdev entry new --track conhecimento|bug --slug <slug>');
+    const { values } = parseArgs({ args: rest, allowPositionals: false, options: { track: { type: 'string' }, slug: { type: 'string' } } });
+    if (!values.track || !values.slug) throw new UsageError('uso: betterdev entry new --track conhecimento|bug --slug <slug>');
+    console.log(`criado      ${newEntry(findProjectRoot(), values.track, values.slug)}`);
+    return 0;
+  },
+
+  recall(args) {
+    const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { full: { type: 'boolean' } } });
+    const terms = parseTerms(positionals);
+    if (!terms.length) throw new UsageError('uso: betterdev recall <termos...> [--full]');
+    const root = findProjectRoot();
+    const hits = recall(root, terms);
+    console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(' ')}`);
     return 0;
   },
 

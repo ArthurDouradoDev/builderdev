@@ -1,2 +1,4 @@
 node_modules/
 .dev/.local/
+.dev/memory/index.md
+.dev/errors/index.md

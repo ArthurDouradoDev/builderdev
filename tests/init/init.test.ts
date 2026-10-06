@@ -4,6 +4,8 @@ import { join, relative } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { DEV_DIRS, init, pluginTemplatesDir } from '../../src/init';
 
+const IGNORED = '.dev/.local/\n.dev/memory/index.md\n.dev/errors/index.md\n';
+
 let root: string;
 
 beforeEach(() => {
@@ -35,14 +37,14 @@ function snapshot(dir: string): Record<string, string> {
 }
 
 describe('init', () => {
-  it('cria a estrutura .dev, copia o template e ignora .dev/.local', () => {
+  it('cria a estrutura .dev, copia o template e ignora .dev/.local e os índices gerados', () => {
     const actions = init(root);
 
     for (const dir of DEV_DIRS) expect(statSync(join(root, dir)).isDirectory()).toBe(true);
     expect(readFileSync(join(root, '.dev/templates/plan.md'), 'utf8')).toBe(
       readFileSync(join(pluginTemplatesDir(), 'plan.md'), 'utf8'),
     );
-    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe('.dev/.local/\n');
+    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe(IGNORED);
     expect(actions).toHaveLength(DEV_DIRS.length + 2);
   });
 
@@ -71,15 +73,22 @@ describe('init', () => {
 
     init(root);
 
-    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe('node_modules/\ndist\n.dev/.local/\n');
+    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe(`node_modules/\ndist\n${IGNORED}`);
   });
 
-  it('não duplica a regra quando o .gitignore já cobre .dev/.local', () => {
+  it('não duplica regras que o .gitignore já cobre e mantém o fim de linha do arquivo', () => {
     writeFileSync(join(root, '.gitignore'), 'node_modules/\r\n/.dev/.local\r\n');
 
     init(root);
 
-    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe('node_modules/\r\n/.dev/.local\r\n');
+    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe(
+      'node_modules/\r\n/.dev/.local\r\n.dev/memory/index.md\r\n.dev/errors/index.md\r\n',
+    );
+
+    const covered = 'node_modules/\n/.dev/.local\n/.dev/memory/index.md\n.dev/errors/index.md\n';
+    writeFileSync(join(root, '.gitignore'), covered);
+    init(root);
+    expect(readFileSync(join(root, '.gitignore'), 'utf8')).toBe(covered);
   });
 
   it('preserva um template já existente no projeto', () => {

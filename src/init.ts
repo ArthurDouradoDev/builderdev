@@ -3,7 +3,8 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const DEV_DIRS = ['.dev', '.dev/plans', '.dev/memory', '.dev/errors', '.dev/templates', '.dev/.local'];
-const LOCAL_IGNORE = '.dev/.local/';
+/** Estado local e índices gerados pelo `betterdev reindex`: nunca vão para o git. */
+const IGNORED = ['.dev/.local/', '.dev/memory/index.md', '.dev/errors/index.md'];
 
 /** Pasta `templates/` do plugin. Vale tanto para `src/init.ts` quanto para o `dist/cli.js` gerado. */
 export function pluginTemplatesDir(): string {
@@ -12,7 +13,7 @@ export function pluginTemplatesDir(): string {
 
 /**
  * Cria a estrutura `.dev/` em `root`. Idempotente: não sobrescreve nada que já exista
- * e não toca no CLAUDE.md. Devolve uma linha por mudança feita.
+ * e não toca no CLAUDE.md. Garante no `.gitignore` as regras de `IGNORED`. Devolve uma linha por mudança feita.
  */
 export function init(root: string, templatesDir = pluginTemplatesDir()): string[] {
   const actions: string[] = [];
@@ -33,13 +34,13 @@ export function init(root: string, templatesDir = pluginTemplatesDir()): string[
 
   const gitignore = join(root, '.gitignore');
   const current = existsSync(gitignore) ? readFileSync(gitignore, 'utf8') : null;
-  const ignored = (current ?? '')
-    .split(/\r?\n/)
-    .some((l) => ['.dev/.local/', '.dev/.local', '/.dev/.local/', '/.dev/.local'].includes(l.trim()));
-  if (!ignored) {
-    const prefix = current && !current.endsWith('\n') ? '\n' : '';
-    writeFileSync(gitignore, `${current ?? ''}${prefix}${LOCAL_IGNORE}\n`);
-    actions.push(`${current === null ? 'criado    ' : 'atualizado'}  .gitignore (${LOCAL_IGNORE})`);
+  const existing = new Set((current ?? '').split(/\r?\n/).map((l) => l.trim().replace(/^\//, '').replace(/\/$/, '')));
+  const missing = IGNORED.filter((rule) => !existing.has(rule.replace(/\/$/, '')));
+  if (missing.length) {
+    const eol = current?.includes('\r\n') ? '\r\n' : '\n';
+    const prefix = current && !current.endsWith('\n') ? eol : '';
+    writeFileSync(gitignore, `${current ?? ''}${prefix}${missing.map((rule) => `${rule}${eol}`).join('')}`);
+    actions.push(`${current === null ? 'criado    ' : 'atualizado'}  .gitignore (${missing.join(', ')})`);
   }
 
   return actions;

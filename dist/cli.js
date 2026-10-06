@@ -49,9 +49,9 @@ var require_identity = __commonJS({
     var NODE_TYPE = /* @__PURE__ */ Symbol.for("yaml.node.type");
     var isAlias = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === ALIAS;
     var isDocument = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === DOC;
-    var isMap2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
+    var isMap3 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === MAP;
     var isPair = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === PAIR;
-    var isScalar2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
+    var isScalar3 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SCALAR;
     var isSeq2 = (node) => !!node && typeof node === "object" && node[NODE_TYPE] === SEQ;
     function isCollection(node) {
       if (node && typeof node === "object")
@@ -73,7 +73,7 @@ var require_identity = __commonJS({
         }
       return false;
     }
-    var hasAnchor = (node) => (isScalar2(node) || isCollection(node)) && !!node.anchor;
+    var hasAnchor = (node) => (isScalar3(node) || isCollection(node)) && !!node.anchor;
     exports.ALIAS = ALIAS;
     exports.DOC = DOC;
     exports.MAP = MAP;
@@ -85,10 +85,10 @@ var require_identity = __commonJS({
     exports.isAlias = isAlias;
     exports.isCollection = isCollection;
     exports.isDocument = isDocument;
-    exports.isMap = isMap2;
+    exports.isMap = isMap3;
     exports.isNode = isNode;
     exports.isPair = isPair;
-    exports.isScalar = isScalar2;
+    exports.isScalar = isScalar3;
     exports.isSeq = isSeq2;
   }
 });
@@ -3999,10 +3999,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4016,7 +4016,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep4) {
+          if (!keyProps.anchor && !keyProps.tag && !sep5) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4040,7 +4040,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep5 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4056,7 +4056,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep4, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep5, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4147,7 +4147,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep4 = "";
+        let sep5 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4161,13 +4161,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep4 + cb;
-              sep4 = "";
+                comment += sep5 + cb;
+              sep5 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep4 += source;
+                sep5 += source;
               hasSpace = true;
               break;
             default:
@@ -4197,9 +4197,9 @@ var require_resolve_flow_collection = __commonJS({
     var blockMsg = "Block collections are not allowed within flow collections";
     var isBlock = (token) => token && (token.type === "block-map" || token.type === "block-seq");
     function resolveFlowCollection({ composeNode, composeEmptyNode }, ctx, fc, onError, tag) {
-      const isMap2 = fc.start.source === "{";
-      const fcName = isMap2 ? "flow map" : "flow sequence";
-      const NodeClass = tag?.nodeClass ?? (isMap2 ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
+      const isMap3 = fc.start.source === "{";
+      const fcName = isMap3 ? "flow map" : "flow sequence";
+      const NodeClass = tag?.nodeClass ?? (isMap3 ? YAMLMap.YAMLMap : YAMLSeq.YAMLSeq);
       const coll = new NodeClass(ctx.schema);
       coll.flow = true;
       const atRoot = ctx.atRoot;
@@ -4210,18 +4210,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep4, value } = collItem;
+        const { start, key, sep: sep5, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep4?.[0],
+          next: key ?? sep5?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep4 && !value) {
+          if (!props.anchor && !props.tag && !sep5 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4235,7 +4235,7 @@ var require_resolve_flow_collection = __commonJS({
             offset = props.end;
             continue;
           }
-          if (!isMap2 && ctx.options.strict && utilContainsNewline.containsNewline(key))
+          if (!isMap3 && ctx.options.strict && utilContainsNewline.containsNewline(key))
             onError(
               key,
               // checked by containsNewline()
@@ -4275,8 +4275,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap2 && !sep4 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep4, null, props, onError);
+        if (!isMap3 && !sep5 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep5, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4288,7 +4288,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep4 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep5 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4298,9 +4298,9 @@ var require_resolve_flow_collection = __commonJS({
             startOnNewline: false
           });
           if (valueProps.found) {
-            if (!isMap2 && !props.found && ctx.options.strict) {
-              if (sep4)
-                for (const st of sep4) {
+            if (!isMap3 && !props.found && ctx.options.strict) {
+              if (sep5)
+                for (const st of sep5) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4317,7 +4317,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep4, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep5, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4330,7 +4330,7 @@ var require_resolve_flow_collection = __commonJS({
           const pair = new Pair.Pair(keyNode, valueNode);
           if (ctx.options.keepSourceTokens)
             pair.srcToken = collItem;
-          if (isMap2) {
+          if (isMap3) {
             const map = coll;
             if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
               onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
@@ -4346,7 +4346,7 @@ var require_resolve_flow_collection = __commonJS({
           offset = valueNode ? valueNode.range[2] : valueProps.end;
         }
       }
-      const expectedEnd = isMap2 ? "}" : "]";
+      const expectedEnd = isMap3 ? "}" : "]";
       const [ce, ...ee] = fc.end;
       let cePos = offset;
       if (ce?.source === expectedEnd)
@@ -4497,7 +4497,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep4 = "";
+      let sep5 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4514,24 +4514,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep4 === " ")
-            sep4 = "\n";
-          else if (!prevMoreIndented && sep4 === "\n")
-            sep4 = "\n\n";
-          value += sep4 + indent.slice(trimIndent) + content;
-          sep4 = "\n";
+          if (sep5 === " ")
+            sep5 = "\n";
+          else if (!prevMoreIndented && sep5 === "\n")
+            sep5 = "\n\n";
+          value += sep5 + indent.slice(trimIndent) + content;
+          sep5 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep4 === "\n")
+          if (sep5 === "\n")
             value += "\n";
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          value += sep4 + content;
-          sep4 = " ";
+          value += sep5 + content;
+          sep5 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4714,25 +4714,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match[1].replace(trimEnd, "");
-      let sep4 = " ";
+      let sep5 = " ";
       let pos = line.lastIndex;
       while (match = line.exec(source)) {
         const lm = match[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep4 === "\n")
-            res += sep4;
+          if (sep5 === "\n")
+            res += sep5;
           else
-            sep4 = "\n";
+            sep5 = "\n";
         } else {
-          res += sep4 + lm;
-          sep4 = " ";
+          res += sep5 + lm;
+          sep5 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep4 + (match?.[1] ?? "");
+      return res + sep5 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5542,14 +5542,14 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep4, value }) {
+    function stringifyItem({ start, key, sep: sep5, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep4)
-        for (const st of sep4)
+      if (sep5)
+        for (const st of sep5)
           res += st.source;
       if (value)
         res += stringifyToken(value);
@@ -5633,7 +5633,7 @@ var require_cst = __commonJS({
     var FLOW_END = "";
     var SCALAR = "";
     var isCollection = (token) => !!token && "items" in token;
-    var isScalar2 = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
+    var isScalar3 = (token) => !!token && (token.type === "scalar" || token.type === "single-quoted-scalar" || token.type === "double-quoted-scalar" || token.type === "block-scalar");
     function prettyToken(token) {
       switch (token) {
         case BOM:
@@ -5717,7 +5717,7 @@ var require_cst = __commonJS({
     exports.FLOW_END = FLOW_END;
     exports.SCALAR = SCALAR;
     exports.isCollection = isCollection;
-    exports.isScalar = isScalar2;
+    exports.isScalar = isScalar3;
     exports.prettyToken = prettyToken;
     exports.tokenType = tokenType;
   }
@@ -6316,7 +6316,7 @@ var require_lexer = __commonJS({
 var require_line_counter = __commonJS({
   "node_modules/yaml/dist/parse/line-counter.js"(exports) {
     "use strict";
-    var LineCounter2 = class {
+    var LineCounter3 = class {
       constructor() {
         this.lineStarts = [];
         this.addNewLine = (offset) => this.lineStarts.push(offset);
@@ -6339,7 +6339,7 @@ var require_line_counter = __commonJS({
         };
       }
     };
-    exports.LineCounter = LineCounter2;
+    exports.LineCounter = LineCounter3;
   }
 });
 
@@ -6716,18 +6716,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep4;
+          let sep5;
           if (scalar.end) {
-            sep4 = scalar.end;
-            sep4.push(this.sourceToken);
+            sep5 = scalar.end;
+            sep5.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep4 = [this.sourceToken];
+            sep5 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep4 }]
+            items: [{ start, key: scalar, sep: sep5 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6880,15 +6880,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep4 = it.sep;
-                  sep4.push(this.sourceToken);
+                  const sep5 = it.sep;
+                  sep5.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep4 }]
+                    items: [{ start: start2, key, sep: sep5 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7082,13 +7082,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep4 = fc.end.splice(1, fc.end.length);
-            sep4.push(this.sourceToken);
+            const sep5 = fc.end.splice(1, fc.end.length);
+            sep5.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep4 }]
+              items: [{ start, key: fc, sep: sep5 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -7247,7 +7247,7 @@ var require_public_api = __commonJS({
         return docs;
       return Object.assign([], { empty: true }, composer$1.streamInfo());
     }
-    function parseDocument2(source, options = {}) {
+    function parseDocument3(source, options = {}) {
       const { lineCounter: lineCounter2, prettyErrors } = parseOptions(options);
       const parser$1 = new parser.Parser(lineCounter2?.addNewLine);
       const composer$1 = new composer.Composer(options);
@@ -7273,7 +7273,7 @@ var require_public_api = __commonJS({
       } else if (options === void 0 && reviver && typeof reviver === "object") {
         options = reviver;
       }
-      const doc = parseDocument2(src, options);
+      const doc = parseDocument3(src, options);
       if (!doc)
         return null;
       doc.warnings.forEach((warning) => log.warn(doc.options.logLevel, warning));
@@ -7309,7 +7309,7 @@ var require_public_api = __commonJS({
     }
     exports.parse = parse;
     exports.parseAllDocuments = parseAllDocuments;
-    exports.parseDocument = parseDocument2;
+    exports.parseDocument = parseDocument3;
     exports.stringify = stringify2;
   }
 });
@@ -7367,8 +7367,8 @@ var require_dist = __commonJS({
 });
 
 // src/cli.ts
-import { existsSync as existsSync6, readdirSync as readdirSync2, statSync as statSync2 } from "node:fs";
-import { delimiter, join as join6, relative as relative3, resolve as resolve5, sep as sep3 } from "node:path";
+import { existsSync as existsSync10, readdirSync as readdirSync3, statSync as statSync4 } from "node:fs";
+import { basename as basename4, delimiter, join as join10, relative as relative4, resolve as resolve6, sep as sep4 } from "node:path";
 import { parseArgs } from "node:util";
 
 // package.json
@@ -7444,10 +7444,10 @@ function readPlanSteps(cwd, { all = false } = {}) {
   const args = ["log", LOG_FORMAT, "--regexp-ignore-case", `--grep=${TRAILER_KEY}`];
   if (all) args.push("--all");
   for (const record of git(args, cwd).split("\n")) {
-    const sep4 = record.indexOf("");
-    if (sep4 < 0) continue;
-    const hash = record.slice(0, sep4).trim();
-    for (const value of record.slice(sep4 + 1).split("")) {
+    const sep5 = record.indexOf("");
+    if (sep5 < 0) continue;
+    const hash = record.slice(0, sep5).trim();
+    for (const value of record.slice(sep5 + 1).split("")) {
       const ref = value.replace(/\s+/g, " ").trim();
       if (!ref) continue;
       const commits = steps.get(ref) ?? [];
@@ -7891,7 +7891,7 @@ import { constants, copyFileSync as copyFileSync2, existsSync as existsSync5, mk
 import { dirname as dirname3, join as join5, resolve as resolve4 } from "node:path";
 import { fileURLToPath } from "node:url";
 var DEV_DIRS = [".dev", ".dev/plans", ".dev/memory", ".dev/errors", ".dev/templates", ".dev/.local"];
-var LOCAL_IGNORE = ".dev/.local/";
+var IGNORED = [".dev/.local/", ".dev/memory/index.md", ".dev/errors/index.md"];
 function pluginTemplatesDir() {
   return resolve4(dirname3(fileURLToPath(import.meta.url)), "..", "templates");
 }
@@ -7911,18 +7911,607 @@ function init(root, templatesDir = pluginTemplatesDir()) {
   }
   const gitignore = join5(root, ".gitignore");
   const current = existsSync5(gitignore) ? readFileSync5(gitignore, "utf8") : null;
-  const ignored = (current ?? "").split(/\r?\n/).some((l) => [".dev/.local/", ".dev/.local", "/.dev/.local/", "/.dev/.local"].includes(l.trim()));
-  if (!ignored) {
-    const prefix = current && !current.endsWith("\n") ? "\n" : "";
-    writeFileSync4(gitignore, `${current ?? ""}${prefix}${LOCAL_IGNORE}
-`);
-    actions.push(`${current === null ? "criado    " : "atualizado"}  .gitignore (${LOCAL_IGNORE})`);
+  const existing = new Set((current ?? "").split(/\r?\n/).map((l) => l.trim().replace(/^\//, "").replace(/\/$/, "")));
+  const missing = IGNORED.filter((rule) => !existing.has(rule.replace(/\/$/, "")));
+  if (missing.length) {
+    const eol = current?.includes("\r\n") ? "\r\n" : "\n";
+    const prefix = current && !current.endsWith("\n") ? eol : "";
+    writeFileSync4(gitignore, `${current ?? ""}${prefix}${missing.map((rule) => `${rule}${eol}`).join("")}`);
+    actions.push(`${current === null ? "criado    " : "atualizado"}  .gitignore (${missing.join(", ")})`);
   }
   return actions;
 }
 
-// src/plan/brief.ts
+// src/memory/entry.ts
+import { existsSync as existsSync7, mkdirSync as mkdirSync4, writeFileSync as writeFileSync5 } from "node:fs";
+import { join as join7 } from "node:path";
+
+// src/memory/schema.ts
 var import_yaml2 = __toESM(require_dist(), 1);
+import { existsSync as existsSync6, readFileSync as readFileSync6, readdirSync as readdirSync2, statSync as statSync2 } from "node:fs";
+import { basename as basename2, join as join6 } from "node:path";
+var TRACKS = ["conhecimento", "bug"];
+var TYPES = {
+  conhecimento: ["convencao", "decisao", "padrao", "ferramenta", "fluxo", "pratica"],
+  bug: ["build", "teste", "runtime", "performance", "dados", "seguranca", "ui", "integracao", "logica"]
+};
+var TRACK_DIRS = { conhecimento: ".dev/memory", bug: ".dev/errors" };
+var INDEX_FILE = "index.md";
+var SUMMARY_MAX = 120;
+var TAGS_MAX = 8;
+var APPLIES_WHEN_MAX = 5;
+var SYMPTOMS_MAX = 5;
+var COMMON_FIELDS = ["track", "type", "module", "summary", "tags", "created", "updated", "applies_when"];
+var BUG_FIELDS = ["symptoms", "root_cause", "resolution", "occurrences"];
+var TAG = /^[\p{Ll}\d]+(?:-[\p{Ll}\d]+)*$/u;
+var SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+var SLUG_DATE = /(?:^|-)(?:\d{4}-\d{2}(?:-\d{2})?|\d{8})(?:-|$)/;
+var DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
+var H1 = /^ {0,3}#[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
+var FENCE2 = /^ {0,3}(`{3,}|~{3,})/;
+var EntryParseError = class extends Error {
+  constructor(message, line) {
+    super(message);
+    this.line = line;
+    this.name = "EntryParseError";
+  }
+  line;
+};
+function readEntry(path) {
+  return parseEntry(readFileSync6(path, "utf8"), path);
+}
+function parseEntry(source, path) {
+  const lines = source.replace(/^﻿/, "").split(/\r?\n/);
+  if (lines[0]?.trim() !== "---") {
+    throw new EntryParseError("frontmatter ausente: a entrada deve come\xE7ar com uma linha '---' seguida do YAML", 1);
+  }
+  const closeIndex = lines.findIndex((l, i) => i > 0 && (l.trim() === "---" || l.trim() === "..."));
+  if (closeIndex < 0) throw new EntryParseError("frontmatter sem fechamento: falta a linha '---' que encerra o YAML", 1);
+  const lineCounter = new import_yaml2.LineCounter();
+  const doc = (0, import_yaml2.parseDocument)(lines.slice(1, closeIndex).join("\n"), { lineCounter });
+  const fileLine = (offset) => lineCounter.linePos(offset).line + 1;
+  const firstError = doc.errors[0];
+  if (firstError) {
+    const reason = (firstError.message.split("\n")[0] ?? "").replace(/ at line \d+, column \d+:?$/, "");
+    throw new EntryParseError(`frontmatter inv\xE1lido: ${reason}`, fileLine(firstError.pos[0]));
+  }
+  if (!(0, import_yaml2.isMap)(doc.contents)) throw new EntryParseError("frontmatter inv\xE1lido: o YAML deve ser um mapeamento (chave: valor)", 2);
+  const fieldLines = {};
+  for (const { key } of doc.contents.items) {
+    if ((0, import_yaml2.isScalar)(key) && key.range) fieldLines[String(key.value)] = fileLine(key.range[0]);
+  }
+  const slug = basename2(path).replace(/\.md$/, "");
+  return {
+    path,
+    slug,
+    lines,
+    frontmatter: doc.toJS() ?? {},
+    fieldLines,
+    bodyStartLine: closeIndex + 2,
+    title: findTitle(lines, closeIndex + 1) ?? slug
+  };
+}
+function findTitle(lines, startIndex) {
+  let fence = null;
+  for (let i = startIndex; i < lines.length; i++) {
+    const line = lines[i] ?? "";
+    const fenceMatch = FENCE2.exec(line);
+    if (fence) {
+      if (fenceMatch?.[1] && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length) fence = null;
+      continue;
+    }
+    if (fenceMatch?.[1]) {
+      fence = fenceMatch[1];
+      continue;
+    }
+    const m = H1.exec(line);
+    if (m?.[1]?.trim()) return m[1].trim();
+  }
+  return null;
+}
+function bodyLines(entry) {
+  const body = entry.lines.slice(entry.bodyStartLine - 1);
+  let start = 0;
+  let end = body.length;
+  while (start < end && body[start].trim() === "") start++;
+  while (end > start && body[end - 1].trim() === "") end--;
+  return body.slice(start, end);
+}
+function entryFields(entry) {
+  const fm = entry.frontmatter;
+  const text = (v) => typeof v === "string" || typeof v === "number" ? String(v).replace(/\s+/g, " ").trim() : "";
+  const list = (v) => Array.isArray(v) ? v.map(text).filter(Boolean) : [];
+  return {
+    track: text(fm.track),
+    type: text(fm.type),
+    module: text(fm.module),
+    summary: text(fm.summary),
+    tags: list(fm.tags),
+    appliesWhen: list(fm.applies_when),
+    symptoms: list(fm.symptoms)
+  };
+}
+function listEntryFiles(dir) {
+  if (!existsSync6(dir) || !statSync2(dir).isDirectory()) return [];
+  return readdirSync2(dir).filter((f) => f.endsWith(".md") && f !== INDEX_FILE).sort().map((f) => join6(dir, f));
+}
+function slugProblems(slug) {
+  if (!SLUG.test(slug)) return [`"${slug}" n\xE3o \xE9 um slug: use min\xFAsculas sem acento, n\xFAmeros e h\xEDfen (ex.: viewshed-crs-metrico)`];
+  if (SLUG_DATE.test(slug)) return [`"${slug}" tem data no nome: o slug descreve o assunto, e a data fica em "created"`];
+  return [];
+}
+function validateEntry(entry) {
+  const problems = [];
+  const fm = entry.frontmatter;
+  const at = (field) => entry.fieldLines[field] ?? 1;
+  const error = (field, code, message) => problems.push({ line: at(field), severity: "erro", code, message });
+  const warn = (field, code, message) => problems.push({ line: at(field), severity: "aviso", code, message });
+  const present = (field) => fm[field] !== void 0 && fm[field] !== null && fm[field] !== "";
+  const track = fm.track;
+  const isTrack = typeof track === "string" && TRACKS.includes(track);
+  if (!present("track")) error("track", "field-missing", `campo "track" ausente: use ${TRACKS.join(" | ")}`);
+  else if (!isTrack) error("track", "track-invalid", `track "${String(track)}" inv\xE1lida: use ${TRACKS.join(" | ")}`);
+  if (!present("type")) {
+    error("type", "field-missing", `campo "type" ausente${isTrack ? `: use ${TYPES[track].join(" | ")}` : ""}`);
+  } else if (isTrack && !TYPES[track].includes(String(fm.type))) {
+    error("type", "type-enum", `type "${String(fm.type)}" n\xE3o existe na trilha ${track}: use ${TYPES[track].join(" | ")}`);
+  }
+  for (const field of ["module", "summary"]) {
+    if (!present(field)) error(field, "field-missing", `campo "${field}" ausente ou vazio`);
+    else if (typeof fm[field] !== "string") error(field, "field-invalid", `"${field}" deve ser texto`);
+  }
+  if (typeof fm.summary === "string") {
+    if (/\n/.test(fm.summary.trim())) error("summary", "summary-multiline", '"summary" deve ter uma linha s\xF3: ela vira a linha do \xEDndice');
+    else if (fm.summary.trim().length > SUMMARY_MAX) {
+      error("summary", "summary-too-long", `"summary" tem ${fm.summary.trim().length} caracteres (m\xE1ximo ${SUMMARY_MAX})`);
+    }
+  }
+  checkList("tags", 1, TAGS_MAX, true);
+  if (Array.isArray(fm.tags)) {
+    for (const tag of fm.tags) {
+      if (typeof tag === "string" && !TAG.test(tag)) error("tags", "tag-format", `tag "${tag}" fora do formato: min\xFAsculas e h\xEDfen (ex.: ui-web)`);
+    }
+  }
+  if (present("applies_when")) checkList("applies_when", 0, APPLIES_WHEN_MAX, false);
+  if (!present("created")) error("created", "field-missing", 'campo "created" ausente: use a data AAAA-MM-DD');
+  for (const field of ["created", "updated"]) {
+    if (present(field) && !isDate(fm[field])) error(field, "date-invalid", `"${field}" deve ser uma data AAAA-MM-DD, n\xE3o "${String(fm[field])}"`);
+  }
+  if (track === "bug") {
+    checkList("symptoms", 1, SYMPTOMS_MAX, true);
+    for (const field of ["root_cause", "resolution"]) {
+      if (!present(field)) error(field, "field-missing", `campo "${field}" ausente ou vazio (obrigat\xF3rio na trilha bug)`);
+      else if (typeof fm[field] !== "string") error(field, "field-invalid", `"${field}" deve ser texto`);
+    }
+    if (!present("occurrences")) error("occurrences", "field-missing", 'campo "occurrences" ausente (obrigat\xF3rio na trilha bug; come\xE7a em 1)');
+    else if (!Number.isInteger(fm.occurrences) || fm.occurrences < 1) {
+      error("occurrences", "occurrences-invalid", `"occurrences" deve ser um inteiro a partir de 1, n\xE3o "${String(fm.occurrences)}"`);
+    }
+  } else if (isTrack) {
+    for (const field of BUG_FIELDS) {
+      if (field in fm) warn(field, "field-wrong-track", `"${field}" s\xF3 vale na trilha bug; nesta trilha ele \xE9 ignorado`);
+    }
+  }
+  const known = /* @__PURE__ */ new Set([...COMMON_FIELDS, ...BUG_FIELDS]);
+  for (const field of Object.keys(fm)) {
+    if (!known.has(field)) warn(field, "field-unknown", `campo "${field}" n\xE3o faz parte do schema e \xE9 ignorado`);
+  }
+  return problems;
+  function checkList(field, min, max, required) {
+    const value = fm[field];
+    if (value === void 0 || value === null) {
+      if (required) error(field, "field-missing", `campo "${field}" ausente: lista com ${min} a ${max} itens`);
+      return;
+    }
+    if (!Array.isArray(value) || !value.every((v) => typeof v === "string" && v.trim() !== "")) {
+      error(field, "field-invalid", `"${field}" deve ser uma lista de textos n\xE3o vazios`);
+    } else if (value.length < min || value.length > max) {
+      error(field, `${field.replace("_", "-")}-count`, `"${field}" tem ${value.length} ${value.length === 1 ? "item" : "itens"} (de ${min} a ${max})`);
+    }
+  }
+}
+function isDate(value) {
+  const m = typeof value === "string" ? DATE.exec(value) : null;
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
+}
+
+// src/memory/entry.ts
+var PLACEHOLDERS = ["<t\xEDtulo>", "<O que vale", "<Detalhes que"];
+function newEntry(root, track, slug, today = localDate()) {
+  if (!TRACKS.includes(track)) throw new ProjectError(`trilha "${track}" inv\xE1lida: use --track ${TRACKS.join(" | ")}`);
+  const [slugProblem] = slugProblems(slug);
+  if (slugProblem) throw new ProjectError(slugProblem);
+  if (!existsSync7(join7(root, ".dev"))) throw new ProjectError("pasta .dev/ n\xE3o encontrada: rode betterdev init antes");
+  for (const t of TRACKS) {
+    const existing = `${TRACK_DIRS[t]}/${slug}.md`;
+    if (existsSync7(join7(root, existing))) {
+      const hint = t === "bug" ? " (se \xE9 o mesmo erro, incremente occurrences)" : "";
+      throw new ProjectError(`j\xE1 existe ${existing}: atualize essa entrada${hint} ou escolha outro slug`);
+    }
+  }
+  const rel = `${TRACK_DIRS[track]}/${slug}.md`;
+  mkdirSync4(join7(root, TRACK_DIRS[track]), { recursive: true });
+  writeFileSync5(join7(root, rel), entryTemplate(track, today), { flag: "wx" });
+  return rel;
+}
+function entryTemplate(track, today) {
+  const common = [
+    `type:              # ${TYPES[track].join(" | ")}`,
+    "module:            # \xE1rea do c\xF3digo; reuse um valor que o \xEDndice j\xE1 usa",
+    "summary:           # uma linha, at\xE9 120 caracteres; vira a linha do \xEDndice",
+    "tags: []           # 1 a 8, min\xFAsculas com h\xEDfen; reuse as do \xEDndice"
+  ];
+  const bug = [
+    "symptoms: []       # 1 a 5: como o erro aparece (mensagem, comportamento)",
+    "root_cause:",
+    "resolution:",
+    "occurrences: 1     # quando o mesmo erro voltar, incremente em vez de criar outra entrada"
+  ];
+  const body = track === "bug" ? "<Detalhes que o frontmatter n\xE3o cobre: exemplo m\xEDnimo, comando que reproduz, armadilha. At\xE9 40 linhas.>" : "<O que vale, por que vale e onde aparece no c\xF3digo. At\xE9 40 linhas.>";
+  return [
+    "---",
+    `track: ${track}`,
+    ...common,
+    ...track === "bug" ? bug : [],
+    "applies_when: []   # opcional, at\xE9 5: situa\xE7\xF5es em que a entrada se aplica",
+    `created: ${today}`,
+    "---",
+    "",
+    "# <t\xEDtulo>",
+    "",
+    body,
+    ""
+  ].join("\n");
+}
+function localDate(now = /* @__PURE__ */ new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+// src/memory/lint.ts
+import { existsSync as existsSync9, readFileSync as readFileSync8 } from "node:fs";
+import { basename as basename3, dirname as dirname4, join as join9, resolve as resolve5 } from "node:path";
+
+// src/memory/reindex.ts
+import { existsSync as existsSync8, readFileSync as readFileSync7, statSync as statSync3, writeFileSync as writeFileSync6 } from "node:fs";
+import { join as join8 } from "node:path";
+var INDEX_HEADER = "<!-- GERADO por betterdev reindex; n\xE3o editar -->";
+var INDEX_MAX_LINES = 200;
+var INDEX_TITLES = { conhecimento: "Mem\xF3ria", bug: "Erros" };
+function indexLine(entry) {
+  const f = entryFields(entry);
+  const kind = `${f.track || "?"}/${f.type || "?"}`;
+  return `- [${entry.slug}](${entry.slug}.md) \xB7 ${kind} \xB7 ${f.module || "?"} \xB7 ${f.tags.join(", ") || "?"} - ${f.summary || "?"}`;
+}
+function buildIndex(track, entries) {
+  const key = (e) => {
+    const module = entryFields(e).module;
+    return [module.toLowerCase(), module, e.slug];
+  };
+  const sorted = [...entries].sort((a, b) => compareKeys(key(a), key(b)));
+  const count = `${sorted.length} ${sorted.length === 1 ? "entrada" : "entradas"}`;
+  return [INDEX_HEADER, `# ${INDEX_TITLES[track]} \xB7 ${count}`, "", ...sorted.map(indexLine), ""].join("\n");
+}
+function indexLineCount(content) {
+  return content.endsWith("\n") ? content.split("\n").length - 1 : content.split("\n").length;
+}
+function loadTrack(root, track) {
+  const entries = [];
+  const skipped = [];
+  for (const file of listEntryFiles(join8(root, TRACK_DIRS[track]))) {
+    try {
+      entries.push(readEntry(file));
+    } catch (err) {
+      if (!(err instanceof EntryParseError)) throw err;
+      skipped.push({ path: file, line: err.line, message: err.message });
+    }
+  }
+  return { entries, skipped };
+}
+function reindex(root) {
+  const results = [];
+  for (const track of TRACKS) {
+    const dir = join8(root, TRACK_DIRS[track]);
+    if (!existsSync8(dir) || !statSync3(dir).isDirectory()) continue;
+    const { entries, skipped } = loadTrack(root, track);
+    const content = buildIndex(track, entries);
+    const file = join8(dir, INDEX_FILE);
+    const changed = !existsSync8(file) || readFileSync7(file, "utf8") !== content;
+    if (changed) writeFileSync6(file, content);
+    const lines = indexLineCount(content);
+    results.push({
+      track,
+      path: `${TRACK_DIRS[track]}/${INDEX_FILE}`,
+      entries: entries.length,
+      lines,
+      changed,
+      overBudget: lines > INDEX_MAX_LINES,
+      skipped
+    });
+  }
+  return results;
+}
+function compareKeys(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (x !== y) return x < y ? -1 : 1;
+  }
+  return 0;
+}
+
+// src/memory/lint.ts
+var ENTRY_MAX_LINES = 40;
+var CLAUDE_MD_MAX_LINES = 150;
+var DIR_TRACKS = { memory: "conhecimento", errors: "bug" };
+function trackOfPath(path) {
+  return DIR_TRACKS[basename3(dirname4(resolve5(path)))] ?? null;
+}
+function isEntryPath(path) {
+  return path.endsWith(".md") && basename3(path) !== INDEX_FILE && trackOfPath(path) !== null;
+}
+function lintEntry(entry) {
+  const problems = validateEntry(entry);
+  for (const message of slugProblems(entry.slug)) problems.push({ line: 1, severity: "erro", code: "slug-invalid", message });
+  const expected = trackOfPath(entry.path);
+  const track = entry.frontmatter.track;
+  if (expected && TRACKS.includes(track) && track !== expected) {
+    problems.push({
+      line: entry.fieldLines.track ?? 1,
+      severity: "erro",
+      code: "track-dir-mismatch",
+      message: `track "${String(track)}" fica em ${TRACK_DIRS[track]}/, n\xE3o em ${TRACK_DIRS[expected]}/`
+    });
+  }
+  const body = bodyLines(entry);
+  if (body.length > ENTRY_MAX_LINES) {
+    problems.push({ line: entry.bodyStartLine, severity: "erro", code: "entry-too-long", message: `corpo com ${body.length} linhas (m\xE1ximo ${ENTRY_MAX_LINES})` });
+  }
+  entry.lines.forEach((text, i) => {
+    const placeholder = i + 1 >= entry.bodyStartLine && PLACEHOLDERS.find((p) => text.includes(p));
+    if (placeholder) {
+      problems.push({ line: i + 1, severity: "erro", code: "entry-placeholder", message: `linha ainda com o texto do modelo (${placeholder}): substitua pelo conte\xFAdo` });
+    }
+  });
+  return problems.sort((a, b) => a.line - b.line);
+}
+function lintMemory(root, targets) {
+  const dirs = TRACKS.map((track) => ({ track, dir: resolve5(root, TRACK_DIRS[track]) }));
+  const projectFiles = dirs.flatMap(({ dir }) => listEntryFiles(dir).map((f) => resolve5(f)));
+  const targetFiles = targets ? targets.map((t) => resolve5(t)) : projectFiles;
+  const entries = /* @__PURE__ */ new Map();
+  const reports = /* @__PURE__ */ new Map();
+  for (const file of /* @__PURE__ */ new Set([...projectFiles, ...targetFiles])) {
+    try {
+      entries.set(file, readEntry(file));
+    } catch (err) {
+      if (!(err instanceof EntryParseError)) throw err;
+      reports.set(file, [{ line: err.line, severity: "erro", code: "frontmatter-invalid", message: err.message }]);
+    }
+  }
+  const corpus = corpusProblems([...entries.values()]);
+  const out = targetFiles.map((file) => {
+    const entry = entries.get(file);
+    const problems = entry ? [...lintEntry(entry), ...corpus.get(file) ?? []].sort((a, b) => a.line - b.line) : reports.get(file) ?? [];
+    return { file, problems };
+  });
+  for (const { track, dir } of dirs) {
+    if (targets && !targetFiles.some((f) => dirname4(f) === dir)) continue;
+    const inDir = [...entries.values()].filter((e) => dirname4(resolve5(e.path)) === dir);
+    const lines = indexLineCount(buildIndex(track, inDir));
+    if (lines > INDEX_MAX_LINES) {
+      out.push({
+        file: join9(dir, INDEX_FILE),
+        problems: [{ line: 1, severity: "erro", code: "index-too-long", message: `o \xEDndice teria ${lines} linhas (m\xE1ximo ${INDEX_MAX_LINES}): funda ou remova entradas` }]
+      });
+    }
+  }
+  if (!targets) {
+    const claude = join9(root, ".dev", "CLAUDE.md");
+    if (existsSync9(claude)) out.push({ file: claude, problems: lintClaudeMd(claude) });
+  }
+  return out;
+}
+function lintClaudeMd(path) {
+  const lines = indexLineCount(readFileSync8(path, "utf8"));
+  return lines > CLAUDE_MD_MAX_LINES ? [{ line: CLAUDE_MD_MAX_LINES + 1, severity: "erro", code: "claude-md-too-long", message: `.dev/CLAUDE.md tem ${lines} linhas (m\xE1ximo ${CLAUDE_MD_MAX_LINES})` }] : [];
+}
+function corpusProblems(entries) {
+  const out = /* @__PURE__ */ new Map();
+  const add = (entry, problem) => out.set(entry.path, [...out.get(entry.path) ?? [], problem]);
+  const modules = [];
+  const tags = [];
+  for (const entry of entries) {
+    const fm = entry.frontmatter;
+    if (typeof fm.module === "string" && fm.module.trim()) modules.push({ value: fm.module.trim(), entry });
+    if (Array.isArray(fm.tags)) {
+      for (const tag of new Set(fm.tags.filter((t) => typeof t === "string" && t.trim() !== ""))) tags.push({ value: tag.trim(), entry });
+    }
+  }
+  for (const [kind, uses] of [["module", modules], ["tag", tags]]) {
+    for (const { use, canonical, count } of nearDuplicates(uses)) {
+      const usedIn = `${kind === "tag" ? "j\xE1 usada" : "j\xE1 usado"} em ${count} ${count === 1 ? "entrada" : "entradas"}`;
+      add(use.entry, {
+        line: use.entry.fieldLines[kind === "tag" ? "tags" : "module"] ?? 1,
+        severity: "aviso",
+        code: `corpus-${kind}`,
+        message: `${kind} "${use.value}" \xE9 quase igual a "${canonical}", ${usedIn}: use "${canonical}"`
+      });
+    }
+  }
+  return out;
+}
+function nearDuplicates(uses) {
+  const stats = /* @__PURE__ */ new Map();
+  for (const { value, entry } of uses) {
+    const created = typeof entry.frontmatter.created === "string" ? entry.frontmatter.created : "9999-99-99";
+    const s = stats.get(value);
+    stats.set(value, s ? { count: s.count + 1, created: s.created < created ? s.created : created } : { count: 1, created });
+  }
+  const values = [...stats.keys()].sort();
+  const parent = new Map(values.map((v) => [v, v]));
+  const find = (v) => parent.get(v) === v ? v : find(parent.get(v));
+  for (let i = 0; i < values.length; i++) {
+    for (let j = i + 1; j < values.length; j++) {
+      if (similar(values[i], values[j])) parent.set(find(values[j]), find(values[i]));
+    }
+  }
+  const canonical = /* @__PURE__ */ new Map();
+  for (const v of values) {
+    const group = find(v);
+    const best = canonical.get(group);
+    if (best === void 0 || preferred(v, best)) canonical.set(group, v);
+  }
+  return uses.map((use) => {
+    const c = canonical.get(find(use.value));
+    return { use, canonical: c, count: stats.get(c).count };
+  }).filter(({ use, canonical: c }) => use.value !== c);
+  function preferred(a, b) {
+    const sa = stats.get(a);
+    const sb = stats.get(b);
+    if (sa.count !== sb.count) return sa.count > sb.count;
+    const clean = (v) => /^[\p{Ll}\d]+(?:-[\p{Ll}\d]+)*$/u.test(v);
+    if (clean(a) !== clean(b)) return clean(a);
+    if (sa.created !== sb.created) return sa.created < sb.created;
+    return a < b;
+  }
+}
+function similar(a, b) {
+  const x = normalizeValue(a);
+  const y = normalizeValue(b);
+  if (x === y) return true;
+  const shorter = Math.min(x.length, y.length);
+  const tolerance = shorter >= 8 ? 2 : shorter >= 5 ? 1 : 0;
+  return tolerance > 0 && editDistance(x, y) <= tolerance;
+}
+function normalizeValue(value) {
+  let s = value.normalize("NFD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase().replace(/[\s._-]/g, "");
+  if (s.length > 3 && s.endsWith("s")) s = s.slice(0, -1);
+  return s;
+}
+function editDistance(a, b) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+// src/memory/recall.ts
+import { readFileSync as readFileSync9 } from "node:fs";
+import { relative as relative3, sep as sep3 } from "node:path";
+var RECALL_LIMIT = 5;
+var FULL_LIMIT = 3;
+var FIELDS = [
+  { name: "tags", weight: 6, kind: "keyword" },
+  { name: "module", weight: 5, kind: "keyword" },
+  { name: "applies_when", weight: 4, kind: "text" },
+  { name: "summary", weight: 3, kind: "text" },
+  { name: "title", weight: 2, kind: "text" },
+  { name: "symptoms", weight: 1, kind: "text" }
+];
+var STOPWORDS = new Set(
+  "a o as os e de da do das dos em no na nos nas um uma uns umas para por com sem que se ao aos como mais the of and to in on for with is".split(" ")
+);
+function parseTerms(args) {
+  const seen = /* @__PURE__ */ new Set();
+  const terms = [];
+  for (const raw of args.join(" ").split(/[\s,]+/)) {
+    const term = raw.trim();
+    const key = normalizeWord(term);
+    if (key.length < 2 || STOPWORDS.has(term.toLowerCase()) || seen.has(key)) continue;
+    seen.add(key);
+    terms.push(term);
+  }
+  return terms;
+}
+function recall(root, terms, limit = RECALL_LIMIT) {
+  const entries = TRACKS.flatMap((track) => loadTrack(root, track).entries);
+  return entries.map((entry) => scoreEntry(entry, terms)).filter((hit) => hit.score > 0).sort(
+    (a, b) => b.score - a.score || totalValues(b) - totalValues(a) || (a.entry.slug < b.entry.slug ? -1 : a.entry.slug > b.entry.slug ? 1 : 0)
+  ).slice(0, limit);
+}
+function scoreEntry(entry, terms) {
+  const f = entryFields(entry);
+  const values = {
+    tags: f.tags,
+    module: f.module ? [f.module] : [],
+    applies_when: f.appliesWhen,
+    summary: f.summary ? [f.summary] : [],
+    title: [entry.title, entry.slug.replace(/-/g, " ")],
+    symptoms: f.symptoms
+  };
+  const found = /* @__PURE__ */ new Map();
+  let score = 0;
+  for (const term of terms) {
+    let best = 0;
+    for (const field of FIELDS) {
+      const hits = field.kind === "keyword" ? values[field.name].filter((v) => keywordMatches(v, term)) : values[field.name].some((v) => textMatches(v, term)) ? [term] : [];
+      if (!hits.length) continue;
+      best = Math.max(best, field.weight);
+      const list = found.get(field.name) ?? [];
+      for (const h of hits) if (!list.includes(h)) list.push(h);
+      found.set(field.name, list);
+    }
+    score += best;
+  }
+  const matches = FIELDS.filter((field) => found.has(field.name)).map((field) => ({
+    field: field.name,
+    // Tags na ordem em que aparecem na entrada.
+    values: field.name === "tags" ? values.tags.filter((t) => found.get("tags").includes(t)) : found.get(field.name)
+  }));
+  return { entry, score, matches };
+}
+function totalValues(hit) {
+  return hit.matches.reduce((n, m) => n + m.values.length, 0);
+}
+function keywordMatches(value, term) {
+  const t = normalizeWord(term);
+  return normalizeWord(value) === t || value.split(/[-_\s]+/).some((part) => normalizeWord(part) === t);
+}
+function textMatches(text, term) {
+  const t = normalizeWord(term);
+  return words(text).some((w) => w === t || t.length >= 4 && w.startsWith(t));
+}
+function words(text) {
+  return text.normalize("NFD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean).map(stripPlural);
+}
+function normalizeWord(value) {
+  return stripPlural(value.normalize("NFD").replace(new RegExp("\\p{M}", "gu"), "").toLowerCase().replace(/[\s._-]/g, ""));
+}
+function stripPlural(word) {
+  return word.length > 3 && word.endsWith("s") ? word.slice(0, -1) : word;
+}
+function formatRecall(root, hits, options = {}) {
+  const rel = (p) => relative3(root, p).split(sep3).join("/");
+  const paths = hits.map((h) => rel(h.entry.path));
+  const width = Math.max(0, ...paths.map((p) => p.length));
+  const out = [];
+  hits.forEach((hit, i) => {
+    const f = entryFields(hit.entry);
+    const indent = " ".repeat(`${i + 1}. `.length);
+    out.push(`${i + 1}. ${paths[i].padEnd(width)}   ${f.track || "?"}/${f.type || "?"} \xB7 ${f.module || "?"}`);
+    out.push(`${indent}${f.summary || "(sem summary)"}`);
+    out.push(`${indent}coincidiu: ${hit.matches.map((m) => `${m.field}(${m.values.join(", ")})`).join(", ")}`);
+  });
+  if (options.full) {
+    hits.slice(0, FULL_LIMIT).forEach((hit, i) => {
+      const content = readFileSync9(hit.entry.path, "utf8").replace(/\r\n/g, "\n").replace(/\n+$/, "");
+      out.push("", `===== ${paths[i]} =====`, content);
+    });
+  }
+  return out.join("\n");
+}
+
+// src/plan/brief.ts
+var import_yaml3 = __toESM(require_dist(), 1);
 var PLAN_SECTIONS = ["Contexto", "Fora do escopo"];
 function brief(entry, phaseId) {
   const { plan } = entry;
@@ -7946,7 +8535,7 @@ function yamlEntry(plan, phaseId) {
   const start = phase.yaml.line - 1;
   const first = plan.lines[start] ?? "";
   const dash = /^(\s*)-\s/.exec(first);
-  if (!dash) return (0, import_yaml2.stringify)([phase.yaml.data]).trimEnd();
+  if (!dash) return (0, import_yaml3.stringify)([phase.yaml.data]).trimEnd();
   const indent = dash[1].length;
   const closeIndex = plan.bodyStartLine - 2;
   const lines = [first];
@@ -7960,13 +8549,13 @@ function yamlEntry(plan, phaseId) {
 }
 
 // src/plan/lint.ts
-import { readFileSync as readFileSync6 } from "node:fs";
+import { readFileSync as readFileSync10 } from "node:fs";
 var COMMIT_TYPES = ["feat", "fix", "refactor", "test", "docs", "chore", "perf", "style", "build", "ci"];
 var COMMIT_MSG = new RegExp(`^(${COMMIT_TYPES.join("|")}): \\S`);
 var PHASE_ID = /^f\d+$/;
 var OBJECTIVE_MAX_LINES = 3;
 function lintPlanFile(path) {
-  return lintPlanSource(readFileSync6(path, "utf8"));
+  return lintPlanSource(readFileSync10(path, "utf8"));
 }
 function lintPlanSource(source) {
   try {
@@ -8142,8 +8731,13 @@ function sameTitle(a, b) {
 var USAGE = `uso: betterdev <comando> [op\xE7\xF5es]
 
 comandos:
-  lint [caminhos...]          valida planos (padr\xE3o: .dev/plans/*.md); sai com 1 se houver erro
+  lint [caminhos...]          valida planos, entradas de memory/ e errors/ e o .dev/CLAUDE.md
+                              (padr\xE3o: o projeto inteiro); sai com 1 se houver erro
   init [pasta]                cria a estrutura .dev/ no projeto (padr\xE3o: pasta atual)
+  entry new --track conhecimento|bug --slug <slug>
+                              cria a entrada em .dev/memory/ ou .dev/errors/, pronta para preencher
+  reindex                     gera .dev/memory/index.md e .dev/errors/index.md a partir do frontmatter
+  recall <termos...> [--full] busca entradas pelo frontmatter; --full imprime as 3 primeiras inteiras
   status [plano] [--json]     status de cada fase, derivado dos commits com o trailer Plan-Step
          [--all]              considera commits de todas as branches, n\xE3o s\xF3 de HEAD
   start <plano>/<fase>        grava a fase ativa em .dev/.local/state.json
@@ -8161,32 +8755,36 @@ var commands = {
   lint(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     const cwd = process.cwd();
-    const targets = positionals.length ? positionals : [join6(".dev", "plans")];
-    const files = [];
+    const root = findProjectRoot(cwd);
+    const mdFiles = (dir) => readdirSync3(dir).filter((f) => f.endsWith(".md")).sort().map((f) => join10(dir, f));
+    const plans = [];
+    const entries = [];
+    const claudeMds = [];
     let missing = 0;
-    for (const target of targets) {
-      const abs = resolve5(cwd, target);
-      if (!existsSync6(abs)) {
-        if (positionals.length) {
-          console.error(`betterdev lint: caminho n\xE3o encontrado: ${target}`);
-          missing++;
-        }
+    if (!positionals.length && existsSync10(join10(root, PLANS_DIR))) plans.push(...mdFiles(join10(root, PLANS_DIR)));
+    for (const target of positionals) {
+      const abs = resolve6(cwd, target);
+      if (!existsSync10(abs)) {
+        console.error(`betterdev lint: caminho n\xE3o encontrado: ${target}`);
+        missing++;
         continue;
       }
-      if (statSync2(abs).isDirectory()) {
-        files.push(...readdirSync2(abs).filter((f) => f.endsWith(".md")).sort().map((f) => join6(abs, f)));
-      } else {
-        files.push(abs);
+      for (const file of statSync4(abs).isDirectory() ? mdFiles(abs) : [abs]) {
+        if (isEntryPath(file)) entries.push(file);
+        else if (trackOfPath(file)) continue;
+        else if (basename4(file) === "CLAUDE.md") claudeMds.push(file);
+        else plans.push(file);
       }
     }
-    if (!files.length) {
-      if (!missing) console.log("nenhum plano encontrado");
+    const reports = [
+      ...plans.map((file) => ({ file, problems: lintPlanFile(file) })),
+      ...positionals.length ? entries.length ? lintMemory(root, entries) : [] : lintMemory(root),
+      ...claudeMds.map((file) => ({ file, problems: lintClaudeMd(file) }))
+    ].map((r) => ({ ...r, file: relative4(cwd, r.file).split(sep4).join("/") }));
+    if (!reports.length) {
+      if (!missing) console.log("nada a validar: nenhum plano nem entrada de mem\xF3ria encontrado");
       return missing ? 1 : 0;
     }
-    const reports = files.map((file) => ({
-      file: relative3(cwd, file).split(sep3).join("/"),
-      problems: lintPlanFile(file)
-    }));
     console.log(formatReport(reports));
     const failed = reports.some((r) => r.problems.some((p) => p.severity === "erro"));
     return failed || missing ? 1 : 0;
@@ -8194,7 +8792,7 @@ var commands = {
   init(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     if (positionals.length > 1) throw new UsageError("init aceita no m\xE1ximo uma pasta");
-    const root = resolve5(positionals[0] ?? ".");
+    const root = resolve6(positionals[0] ?? ".");
     const actions = init(root);
     console.log(actions.length ? actions.join("\n") : "nada a fazer: a estrutura .dev/ j\xE1 existe");
     return 0;
@@ -8256,6 +8854,39 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     process.stdout.write(brief(findPlan(root, ref.plan), ref.phase));
     return 0;
   },
+  reindex(args) {
+    parseArgs({ args, allowPositionals: false, options: {} });
+    const results = reindex(findProjectRoot());
+    if (!results.length) throw new ProjectError("nem .dev/memory nem .dev/errors existem: rode betterdev init");
+    let failed = false;
+    for (const r of results) {
+      const count = `${r.entries} ${r.entries === 1 ? "entrada" : "entradas"}`;
+      console.log(`${(r.changed ? "atualizado" : "sem mudan\xE7a").padEnd(12)}${r.path} (${count})`);
+      for (const s of r.skipped) console.error(`aviso: ${s.message} em ${relative4(process.cwd(), s.path).split(sep4).join("/")}:${s.line}; a entrada ficou fora do \xEDndice`);
+      if (r.overBudget) {
+        console.error(`erro: ${r.path} tem ${r.lines} linhas (m\xE1ximo ${INDEX_MAX_LINES}): funda ou remova entradas`);
+        failed = true;
+      }
+    }
+    return failed ? 1 : 0;
+  },
+  entry(args) {
+    const [sub, ...rest] = args;
+    if (sub !== "new") throw new UsageError("uso: betterdev entry new --track conhecimento|bug --slug <slug>");
+    const { values } = parseArgs({ args: rest, allowPositionals: false, options: { track: { type: "string" }, slug: { type: "string" } } });
+    if (!values.track || !values.slug) throw new UsageError("uso: betterdev entry new --track conhecimento|bug --slug <slug>");
+    console.log(`criado      ${newEntry(findProjectRoot(), values.track, values.slug)}`);
+    return 0;
+  },
+  recall(args) {
+    const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { full: { type: "boolean" } } });
+    const terms = parseTerms(positionals);
+    if (!terms.length) throw new UsageError("uso: betterdev recall <termos...> [--full]");
+    const root = findProjectRoot();
+    const hits = recall(root, terms);
+    console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(" ")}`);
+    return 0;
+  },
   hooks(args) {
     const [sub, ...rest] = args;
     if (rest.length || sub !== "install" && sub !== "uninstall") throw new UsageError("uso: betterdev hooks install | uninstall");
@@ -8294,7 +8925,7 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
   }
 };
 function onPath(name) {
-  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync6(join6(dir, name)) || existsSync6(join6(dir, `${name}.exe`)));
+  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync10(join10(dir, name)) || existsSync10(join10(dir, `${name}.exe`)));
 }
 var UsageError = class extends Error {
 };
