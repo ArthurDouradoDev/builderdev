@@ -1,0 +1,43 @@
+{
+  "description": "BetterDev: injeta o estado do projeto na sessão, roda o verify da fase ativa no fim do turno e conta compactações. Inerte fora de projetos com .dev/.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.js", "hook", "session-start"],
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.js", "hook", "stop"],
+            "timeout": 300,
+            "statusMessage": "betterdev: verificando a fase ativa"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.js", "hook", "post-compact"],
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

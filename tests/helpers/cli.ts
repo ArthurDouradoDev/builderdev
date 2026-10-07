@@ -48,6 +48,18 @@ export function runCli(cli: BuiltCli, cwd: string, ...args: string[]): RunResult
 }
 
 /**
+ * Roda `betterdev hook <evento>` como o Claude Code: o JSON do evento no stdin.
+ * Sem `CLAUDE_PROJECT_DIR` herdado, para que uma sessão do Claude Code rodando os testes não aponte para este repositório.
+ */
+export function runHook(cli: BuiltCli, cwd: string, event: string, input: unknown): RunResult {
+  const env = { ...process.env };
+  delete env.CLAUDE_PROJECT_DIR;
+  const stdin = typeof input === 'string' ? input : JSON.stringify(input);
+  const r = spawnSync(process.execPath, [cli.script, 'hook', event], { cwd, encoding: 'utf8', input: stdin, env });
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr };
+}
+
+/**
  * Roda o git com o `betterdev` do bundle no PATH, como numa máquina com `npm link`.
  * Com `cli` nulo, tira do PATH qualquer `betterdev` instalado, para simular a máquina sem ele.
  */

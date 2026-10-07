@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, delimiter, join, relative, resolve, sep } from 'node:path';
 import { parseArgs } from 'node:util';
 import pkg from '../package.json' with { type: 'json' };
 import { prepareCommitMsg } from './commit-msg';
 import { installHook, uninstallHook } from './git/hooks-install';
 import { GitError, readPlanSteps } from './git/log';
+import { hookProjectRoot, parseHookInput, type HookInput } from './hooks/common';
+import { postCompact } from './hooks/post-compact';
+import { sessionStart } from './hooks/session-start';
+import { stopHook } from './hooks/stop';
 import { init } from './init';
 import { newEntry } from './memory/entry';
 import { isEntryPath, lintClaudeMd, lintMemory, trackOfPath } from './memory/lint';
@@ -36,6 +40,8 @@ comandos:
   hooks install|uninstall     instala ou remove o git hook prepare-commit-msg
   commit-msg <arquivo> [origem]
                               usado pelo git hook: preenche a mensagem e o trailer da fase ativa
+  hook session-start|stop|post-compact
+                              usado pelos hooks do Claude Code, com o JSON do evento no stdin
 
 opções gerais:
   -h, --help                  mostra esta ajuda
@@ -215,6 +221,28 @@ const commands: Record<string, Command> = {
     return 0;
   },
 
+  // Chamado pelos hooks do Claude Code (hooks/hooks.json), com o JSON do evento no stdin.
+  // Nunca sai com 2: no Stop, o código 2 bloquearia o fim do turno. Erro interno sai com 1, que o Claude Code só exibe.
+  hook(args) {
+    const [event, ...rest] = args;
+    const run = event ? HOOKS[event] : undefined;
+    if (!run || rest.length) {
+      console.error(`betterdev hook: uso: betterdev hook ${Object.keys(HOOKS).join(' | ')}`);
+      return 1;
+    }
+    try {
+      const input = parseHookInput(readStdin());
+      const root = hookProjectRoot(input);
+      if (!root) return 0; // fora de um projeto BetterDev: sem saída
+      const output = run(root, input);
+      if (output) process.stdout.write(`${JSON.stringify(output)}\n`);
+    } catch (err) {
+      console.error(`betterdev hook ${event}: ${(err as Error).message}`);
+      return 1;
+    }
+    return 0;
+  },
+
   // Chamado pelo git hook: avisa no stderr, mas nunca falha e nunca bloqueia o commit.
   'commit-msg'(args) {
     try {
@@ -229,6 +257,26 @@ const commands: Record<string, Command> = {
     return 0;
   },
 };
+
+/** Cada evento devolve o JSON a imprimir no stdout, ou nada. */
+const HOOKS: Record<string, (root: string, input: HookInput) => object | undefined> = {
+  'session-start': (root, input) => sessionStart(root, input).output,
+  stop: (root, input) => stopHook(root, input).output,
+  'post-compact': (root, input) => {
+    postCompact(root, input);
+    return undefined;
+  },
+};
+
+/** Todo o stdin; vazio quando é um terminal ou não pôde ser lido. */
+function readStdin(): string {
+  if (process.stdin.isTTY) return '';
+  try {
+    return readFileSync(0, 'utf8');
+  } catch {
+    return '';
+  }
+}
 
 /** Executável `name` em alguma pasta do PATH, como o `sh` do git hook procuraria. */
 function onPath(name: string): boolean {

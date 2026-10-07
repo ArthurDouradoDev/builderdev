@@ -77,6 +77,8 @@ export interface PhaseSpec {
   title?: string;
   needs?: string[];
   commitMsg?: string;
+  files?: string[];
+  verify?: string[];
 }
 
 /** Plano válido para o `betterdev lint`. Cada fase tem a frase "Texto exclusivo da <id>" no corpo. */
@@ -86,8 +88,8 @@ export function planSource(id: string, phases: PhaseSpec[]): string {
     `  - id: ${p.id}`,
     `    title: ${title(p)}`,
     ...(p.needs ? [`    needs: [${p.needs.join(', ')}]`] : []),
-    `    files: [src/${p.id}.ts]`,
-    `    verify: ["npm test -- ${p.id}"]`,
+    `    files: ${p.files ? JSON.stringify(p.files) : `[src/${p.id}.ts]`}`,
+    `    verify: ${JSON.stringify(p.verify ?? [`npm test -- ${p.id}`])}`,
     `    commit_msg: "${p.commitMsg ?? `feat: entrega da ${p.id}`}"`,
   ]);
   const body = phases.flatMap((p) => [

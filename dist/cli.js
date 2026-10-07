@@ -7367,8 +7367,8 @@ var require_dist = __commonJS({
 });
 
 // src/cli.ts
-import { existsSync as existsSync10, readdirSync as readdirSync3, statSync as statSync4 } from "node:fs";
-import { basename as basename4, delimiter, join as join10, relative as relative4, resolve as resolve6, sep as sep4 } from "node:path";
+import { existsSync as existsSync14, readFileSync as readFileSync14, readdirSync as readdirSync4, statSync as statSync6 } from "node:fs";
+import { basename as basename4, delimiter, join as join14, relative as relative4, resolve as resolve6, sep as sep4 } from "node:path";
 import { parseArgs } from "node:util";
 
 // package.json
@@ -7886,49 +7886,54 @@ function display(cwd, file) {
   return relative2(cwd, file).split(sep2).join("/");
 }
 
-// src/init.ts
-import { constants, copyFileSync as copyFileSync2, existsSync as existsSync5, mkdirSync as mkdirSync3, readFileSync as readFileSync5, writeFileSync as writeFileSync4 } from "node:fs";
-import { dirname as dirname3, join as join5, resolve as resolve4 } from "node:path";
-import { fileURLToPath } from "node:url";
-var DEV_DIRS = [".dev", ".dev/plans", ".dev/memory", ".dev/errors", ".dev/templates", ".dev/.local"];
-var IGNORED = [".dev/.local/", ".dev/memory/index.md", ".dev/errors/index.md"];
-function pluginTemplatesDir() {
-  return resolve4(dirname3(fileURLToPath(import.meta.url)), "..", "templates");
+// src/hooks/common.ts
+import { appendFileSync, existsSync as existsSync5, mkdirSync as mkdirSync3, statSync as statSync2 } from "node:fs";
+import { dirname as dirname3, join as join5 } from "node:path";
+var METRICS_FILE = ".dev/.local/metrics.jsonl";
+function parseHookInput(text) {
+  const json = text.replace(/^﻿/, "");
+  if (!json.trim()) return {};
+  try {
+    const data = JSON.parse(json);
+    return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  } catch {
+    return {};
+  }
 }
-function init(root, templatesDir = pluginTemplatesDir()) {
-  const actions = [];
-  for (const dir of DEV_DIRS) {
-    const path = join5(root, dir);
-    if (!existsSync5(path)) {
-      mkdirSync3(path, { recursive: true });
-      actions.push(`criado      ${dir}/`);
-    }
-  }
-  const template = join5(root, ".dev/templates/plan.md");
-  if (!existsSync5(template)) {
-    copyFileSync2(join5(templatesDir, "plan.md"), template, constants.COPYFILE_EXCL);
-    actions.push("criado      .dev/templates/plan.md");
-  }
-  const gitignore = join5(root, ".gitignore");
-  const current = existsSync5(gitignore) ? readFileSync5(gitignore, "utf8") : null;
-  const existing = new Set((current ?? "").split(/\r?\n/).map((l) => l.trim().replace(/^\//, "").replace(/\/$/, "")));
-  const missing = IGNORED.filter((rule) => !existing.has(rule.replace(/\/$/, "")));
-  if (missing.length) {
-    const eol = current?.includes("\r\n") ? "\r\n" : "\n";
-    const prefix = current && !current.endsWith("\n") ? eol : "";
-    writeFileSync4(gitignore, `${current ?? ""}${prefix}${missing.map((rule) => `${rule}${eol}`).join("")}`);
-    actions.push(`${current === null ? "criado    " : "atualizado"}  .gitignore (${missing.join(", ")})`);
-  }
-  return actions;
+function hookProjectRoot(input, env = process.env) {
+  const start = input.cwd || env.CLAUDE_PROJECT_DIR || process.cwd();
+  const root = findProjectRoot(start);
+  const dev = join5(root, ".dev");
+  return existsSync5(dev) && statSync2(dev).isDirectory() ? root : null;
+}
+function textList(value) {
+  if (typeof value === "string") return value.trim() ? [value.trim()] : [];
+  return Array.isArray(value) ? value.filter((v) => typeof v === "string" && v.trim() !== "").map((v) => v.trim()) : [];
+}
+function appendMetric(root, record, now = /* @__PURE__ */ new Date()) {
+  const file = join5(root, METRICS_FILE);
+  mkdirSync3(dirname3(file), { recursive: true });
+  appendFileSync(file, `${JSON.stringify({ ...record, ts: now.toISOString() })}
+`);
 }
 
-// src/memory/entry.ts
-import { existsSync as existsSync7, mkdirSync as mkdirSync4, writeFileSync as writeFileSync5 } from "node:fs";
+// src/hooks/post-compact.ts
+function postCompact(root, input, now = /* @__PURE__ */ new Date()) {
+  const trigger = input.trigger ?? input.hookSpecificOutput?.trigger ?? null;
+  appendMetric(root, { evento: "compact", trigger, session_id: input.session_id ?? null }, now);
+}
+
+// src/hooks/session-start.ts
+import { existsSync as existsSync8, readFileSync as readFileSync7 } from "node:fs";
+import { join as join8 } from "node:path";
+
+// src/memory/reindex.ts
+import { existsSync as existsSync7, readFileSync as readFileSync6, statSync as statSync4, writeFileSync as writeFileSync4 } from "node:fs";
 import { join as join7 } from "node:path";
 
 // src/memory/schema.ts
 var import_yaml2 = __toESM(require_dist(), 1);
-import { existsSync as existsSync6, readFileSync as readFileSync6, readdirSync as readdirSync2, statSync as statSync2 } from "node:fs";
+import { existsSync as existsSync6, readFileSync as readFileSync5, readdirSync as readdirSync2, statSync as statSync3 } from "node:fs";
 import { basename as basename2, join as join6 } from "node:path";
 var TRACKS = ["conhecimento", "bug"];
 var TYPES = {
@@ -7958,7 +7963,7 @@ var EntryParseError = class extends Error {
   line;
 };
 function readEntry(path) {
-  return parseEntry(readFileSync6(path, "utf8"), path);
+  return parseEntry(readFileSync5(path, "utf8"), path);
 }
 function parseEntry(source, path) {
   const lines = source.replace(/^﻿/, "").split(/\r?\n/);
@@ -8032,7 +8037,7 @@ function entryFields(entry) {
   };
 }
 function listEntryFiles(dir) {
-  if (!existsSync6(dir) || !statSync2(dir).isDirectory()) return [];
+  if (!existsSync6(dir) || !statSync3(dir).isDirectory()) return [];
   return readdirSync2(dir).filter((f) => f.endsWith(".md") && f !== INDEX_FILE).sort().map((f) => join6(dir, f));
 }
 function slugProblems(slug) {
@@ -8118,23 +8123,424 @@ function isDate(value) {
   return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
 }
 
+// src/memory/reindex.ts
+var INDEX_HEADER = "<!-- GERADO por betterdev reindex; n\xE3o editar -->";
+var INDEX_MAX_LINES = 200;
+var INDEX_TITLES = { conhecimento: "Mem\xF3ria", bug: "Erros" };
+function indexLine(entry) {
+  const f = entryFields(entry);
+  const kind = `${f.track || "?"}/${f.type || "?"}`;
+  return `- [${entry.slug}](${entry.slug}.md) \xB7 ${kind} \xB7 ${f.module || "?"} \xB7 ${f.tags.join(", ") || "?"} - ${f.summary || "?"}`;
+}
+function buildIndex(track, entries) {
+  const key = (e) => {
+    const module = entryFields(e).module;
+    return [module.toLowerCase(), module, e.slug];
+  };
+  const sorted = [...entries].sort((a, b) => compareKeys(key(a), key(b)));
+  const count = `${sorted.length} ${sorted.length === 1 ? "entrada" : "entradas"}`;
+  return [INDEX_HEADER, `# ${INDEX_TITLES[track]} \xB7 ${count}`, "", ...sorted.map(indexLine), ""].join("\n");
+}
+function indexLineCount(content) {
+  return content.endsWith("\n") ? content.split("\n").length - 1 : content.split("\n").length;
+}
+function loadTrack(root, track) {
+  const entries = [];
+  const skipped = [];
+  for (const file of listEntryFiles(join7(root, TRACK_DIRS[track]))) {
+    try {
+      entries.push(readEntry(file));
+    } catch (err) {
+      if (!(err instanceof EntryParseError)) throw err;
+      skipped.push({ path: file, line: err.line, message: err.message });
+    }
+  }
+  return { entries, skipped };
+}
+function reindex(root) {
+  const results = [];
+  for (const track of TRACKS) {
+    const dir = join7(root, TRACK_DIRS[track]);
+    if (!existsSync7(dir) || !statSync4(dir).isDirectory()) continue;
+    const { entries, skipped } = loadTrack(root, track);
+    const content = buildIndex(track, entries);
+    const file = join7(dir, INDEX_FILE);
+    const changed = !existsSync7(file) || readFileSync6(file, "utf8") !== content;
+    if (changed) writeFileSync4(file, content);
+    const lines = indexLineCount(content);
+    results.push({
+      track,
+      path: `${TRACK_DIRS[track]}/${INDEX_FILE}`,
+      entries: entries.length,
+      lines,
+      changed,
+      overBudget: lines > INDEX_MAX_LINES,
+      skipped
+    });
+  }
+  return results;
+}
+function compareKeys(a, b) {
+  for (let i = 0; i < a.length; i++) {
+    const x = a[i];
+    const y = b[i];
+    if (x !== y) return x < y ? -1 : 1;
+  }
+  return 0;
+}
+
+// src/hooks/session-start.ts
+var CONTEXT_MAX = 8e3;
+var DIFF_MAX_LINES = 10;
+var INDEX_LABELS = { conhecimento: "Mem\xF3ria", bug: "Erros" };
+function sessionStart(root, input, now = /* @__PURE__ */ new Date()) {
+  try {
+    reindex(root);
+  } catch {
+  }
+  const context = buildContext(root);
+  appendMetric(root, { evento: "session-start", source: input.source ?? null, caracteres: context.length, session_id: input.session_id ?? null }, now);
+  return { context, output: { hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: context } } };
+}
+function buildContext(root) {
+  const head = [...phaseLines(root)];
+  const commits = gitLines(root, ["log", "--oneline", "-5"]);
+  if (commits.length) head.push("\xDAltimos commits:", ...commits.map((l) => `  ${l}`));
+  const diff = diffStat(root);
+  const diffBlock = diff.length ? { title: "Mudan\xE7as n\xE3o commitadas (git diff --stat):", lines: diff, shown: diff.length, source: "git diff --stat" } : null;
+  const indexBlocks = TRACKS.flatMap((track) => {
+    const block = indexBlock(root, track);
+    return block ? [block] : [];
+  });
+  const blocks = [...diffBlock ? [diffBlock] : [], ...indexBlocks];
+  const render = () => [...head, ...blocks.flatMap(renderBlock)].join("\n");
+  const byLength = [...indexBlocks].sort((a, b) => renderBlock(b).join("\n").length - renderBlock(a).join("\n").length);
+  for (const block of [...diffBlock ? [diffBlock] : [], ...byLength]) {
+    while (block.shown > 0 && render().length > CONTEXT_MAX) block.shown--;
+  }
+  const text = render();
+  if (text.length <= CONTEXT_MAX) return text;
+  const marker = "\n[cortado: betterdev brief]";
+  return text.slice(0, CONTEXT_MAX - marker.length) + marker;
+}
+function renderBlock(block) {
+  const hidden = block.lines.length - block.shown;
+  return [block.title, ...block.lines.slice(0, block.shown), ...hidden > 0 ? [`  [+${hidden} linhas: ${block.source}]`] : []];
+}
+function phaseLines(root) {
+  const branch = currentBranch(root);
+  const prefix = `[betterdev] ${branch ? `branch ${branch} \xB7 ` : ""}`;
+  const state = readState(root);
+  if (!state) return [`${prefix}nenhuma fase ativa (planos: betterdev status)`];
+  const ref = `${state.plan}/${state.phase}`;
+  try {
+    const entry = findPlan(root, state.plan);
+    const phase = findPhase(entry, state.phase);
+    const lines = [`${prefix}fase ativa ${ref} - ${phase.title}`];
+    const objective = phaseObjective(entry.plan, phase.id);
+    if (objective) lines.push(`Objetivo: ${objective}`);
+    const files = textList(phase.yaml.data.files);
+    if (files.length) lines.push(`Arquivos: ${files.join(", ")}`);
+    const verify = textList(phase.yaml.data.verify);
+    if (verify.length) lines.push(`Verifica\xE7\xE3o: ${verify.join(" \xB7 ")}`);
+    lines.push("Detalhes da fase: betterdev brief");
+    return lines;
+  } catch (err) {
+    return [`${prefix}fase ativa ${ref} n\xE3o p\xF4de ser lida: ${err.message} (betterdev stop limpa)`];
+  }
+}
+function phaseObjective(plan, phaseId) {
+  const body = plan.bodyPhases.find((b) => b.id === phaseId);
+  const section = body?.sections.find((s) => s.level === 3 && s.title.trim().toLowerCase() === "objetivo");
+  if (!section) return "";
+  return plan.lines.slice(section.line, section.endLine).map((l) => l.trim()).filter(Boolean).join(" ");
+}
+function currentBranch(root) {
+  const branch = gitLines(root, ["branch", "--show-current"])[0];
+  if (branch) return branch;
+  const head = gitLines(root, ["rev-parse", "--short", "HEAD"])[0];
+  return head ? `(HEAD destacado em ${head})` : null;
+}
+function diffStat(root) {
+  if (!hasCommits(root)) return [];
+  const lines = gitLines(root, ["diff", "HEAD", "--stat=100", "--stat-graph-width=20"]);
+  if (lines.length <= DIFF_MAX_LINES) return lines;
+  return [...lines.slice(0, DIFF_MAX_LINES - 1), lines[lines.length - 1]];
+}
+function indexBlock(root, track) {
+  const path = `${TRACK_DIRS[track]}/${INDEX_FILE}`;
+  const file = join8(root, path);
+  if (!existsSync8(file)) return null;
+  const lines = readFileSync7(file, "utf8").split(/\r?\n/).filter((l) => l.startsWith("- "));
+  const count = `${lines.length} ${lines.length === 1 ? "entrada" : "entradas"}`;
+  return { title: `${INDEX_LABELS[track]} (${count}, ${path}):`, lines, shown: lines.length, source: "betterdev reindex" };
+}
+function gitLines(root, args) {
+  try {
+    return git(args, root).split(/\r?\n/).map((l) => l.trimEnd()).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+// src/hooks/stop.ts
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { closeSync, existsSync as existsSync10, mkdirSync as mkdirSync4, openSync, readFileSync as readFileSync9, readdirSync as readdirSync3, statSync as statSync5, writeFileSync as writeFileSync5, writeSync } from "node:fs";
+import { dirname as dirname4, join as join10 } from "node:path";
+
+// src/config.ts
+import { existsSync as existsSync9, readFileSync as readFileSync8 } from "node:fs";
+import { join as join9 } from "node:path";
+var CONFIG_FILE = ".dev/config.json";
+var DEFAULT_CONFIG = { verifyOnStop: true };
+function readConfig(root) {
+  const config = { ...DEFAULT_CONFIG };
+  const file = join9(root, CONFIG_FILE);
+  if (!existsSync9(file)) return config;
+  let data;
+  try {
+    data = JSON.parse(readFileSync8(file, "utf8"));
+  } catch {
+    return config;
+  }
+  if (!data || typeof data !== "object" || Array.isArray(data)) return config;
+  const { verifyOnStop } = data;
+  if (typeof verifyOnStop === "boolean") config.verifyOnStop = verifyOnStop;
+  return config;
+}
+
+// src/hooks/stop.ts
+var VERIFY_DIR = ".dev/.local/verify";
+var VERIFY_STATE_FILE = ".dev/.local/verify-state.json";
+var FAILURE_LINES_MAX = 30;
+var VERIFY_BUDGET_MS = 28e4;
+var FAILURE_LINE = /erro|fail|falh|✗|×|assert|exception|traceback|panic|\bTS\d{4}\b|ERR!|expected|received|esperad|\.(?:test|spec)\.[cm]?[jt]sx?:\d+/i;
+var ANSI = /\x1b\[[0-9;?]*[ -/]*[@-~]/g;
+var LINE_MAX = 300;
+var SKIP_DIRS = /* @__PURE__ */ new Set([".git", "node_modules"]);
+function stopHook(root, input, { now = /* @__PURE__ */ new Date(), budgetMs = VERIFY_BUDGET_MS } = {}) {
+  const state = readState(root);
+  if (!state) return { action: "ignorado", reason: "nenhuma fase ativa" };
+  if (input.stop_hook_active === true) return { action: "ignorado", reason: "stop_hook_active" };
+  if (!readConfig(root).verifyOnStop) return { action: "ignorado", reason: "verifyOnStop desligado" };
+  let ref;
+  let phaseId;
+  let files;
+  let verify;
+  try {
+    const entry = findPlan(root, state.plan);
+    const phase = findPhase(entry, state.phase);
+    ref = `${entry.id}/${phase.id}`;
+    phaseId = phase.id;
+    files = textList(phase.yaml.data.files);
+    verify = textList(phase.yaml.data.verify);
+  } catch (err) {
+    return { action: "ignorado", reason: err.message };
+  }
+  if (!verify.length) return { action: "ignorado", reason: "a fase n\xE3o tem verify" };
+  const approved = readApproved(root);
+  if (approved[ref]?.fingerprint === phaseFingerprint(root, files, verify)) {
+    appendMetric(root, { evento: "verify", fase: ref, resultado: "sem-mudanca" }, now);
+    return { action: "sem-mudanca" };
+  }
+  const log = logPath(root, now);
+  const run = runVerify(root, log, verify, budgetMs);
+  if (!run.failed) {
+    approved[ref] = { fingerprint: phaseFingerprint(root, files, verify), at: now.toISOString() };
+    writeApproved(root, approved);
+    appendMetric(root, { evento: "verify", fase: ref, resultado: "aprovado", duracao_ms: run.durationMs, log }, now);
+    return { action: "aprovado", log };
+  }
+  const { command, output, timedOut } = run.failed;
+  appendMetric(root, { evento: "verify", fase: ref, resultado: "falhou", comando: command, duracao_ms: run.durationMs, log }, now);
+  const { lines, hidden } = failureLines(output);
+  const context = [
+    `[betterdev] verifica\xE7\xE3o da fase ${phaseId} falhou${timedOut ? ` (tempo esgotado ap\xF3s ${Math.round(budgetMs / 1e3)} s)` : ""}: ${command}`,
+    ...lines.map((l) => `  ${l}`),
+    ...hidden ? [`(+${hidden} linhas de falha no log)`] : [],
+    `Log completo: ${log}`
+  ].join("\n");
+  return { action: "falhou", log, output: { hookSpecificOutput: { hookEventName: "Stop", additionalContext: context } } };
+}
+function runVerify(root, log, commands2, budgetMs) {
+  const file = join10(root, log);
+  mkdirSync4(dirname4(file), { recursive: true });
+  const fd = openSync(file, "a");
+  const started = Date.now();
+  try {
+    writeSync(fd, `# betterdev verify \xB7 ${new Date(started).toISOString()}
+`);
+    for (const command of commands2) {
+      writeSync(fd, `
+$ ${command}
+`);
+      const offset = statSync5(file).size;
+      const remaining = budgetMs - (Date.now() - started);
+      const r = remaining > 0 ? spawnSync(command, {
+        cwd: root,
+        shell: true,
+        stdio: ["ignore", fd, fd],
+        timeout: remaining,
+        windowsHide: true,
+        env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" }
+      }) : null;
+      const timedOut = !r || r.error?.code === "ETIMEDOUT";
+      const ok = !!r && !r.error && r.status === 0;
+      writeSync(fd, `[${timedOut ? "tempo esgotado" : `saiu com ${r?.status ?? r?.signal ?? r?.error?.message}`}]
+`);
+      if (!ok) {
+        const output = readFileSync9(file).subarray(offset).toString("utf8");
+        return { durationMs: Date.now() - started, failed: { command, output, timedOut } };
+      }
+    }
+    return { durationMs: Date.now() - started };
+  } finally {
+    closeSync(fd);
+  }
+}
+function failureLines(output) {
+  const all = output.replace(ANSI, "").split(/\r?\n/).map((l) => l.trimEnd()).filter((l) => l.trim() && !/^\[(?:saiu com|tempo esgotado)/.test(l));
+  const matched = [...new Set(all.filter((l) => FAILURE_LINE.test(l)))];
+  const picked = matched.length ? matched : all.slice(-10);
+  const clip = (l) => l.length > LINE_MAX ? `${l.slice(0, LINE_MAX - 1)}\u2026` : l;
+  return { lines: picked.slice(0, FAILURE_LINES_MAX).map(clip), hidden: Math.max(0, picked.length - FAILURE_LINES_MAX) };
+}
+function phaseFingerprint(root, files, verify) {
+  const hash = createHash("sha256");
+  hash.update(`${JSON.stringify(verify)}
+`);
+  for (const [rel, abs] of expandFiles(root, files)) {
+    hash.update(`${rel}\0${abs ? createHash("sha256").update(readFileSync9(abs)).digest("hex") : "ausente"}
+`);
+  }
+  return hash.digest("hex");
+}
+function expandFiles(root, patterns) {
+  const found = /* @__PURE__ */ new Map();
+  for (const raw of patterns) {
+    const pattern = raw.replace(/\\/g, "/").replace(/^\.\//, "");
+    const globAt = pattern.search(/[*?[]/);
+    if (globAt >= 0) {
+      const base = pattern.slice(0, pattern.lastIndexOf("/", globAt) + 1);
+      const re = globRegex(pattern);
+      for (const rel of walk(root, base)) if (re.test(rel)) found.set(rel, join10(root, rel));
+      continue;
+    }
+    const abs = join10(root, pattern);
+    if (!existsSync10(abs)) found.set(pattern.replace(/\/$/, ""), null);
+    else if (statSync5(abs).isDirectory()) for (const rel of walk(root, pattern)) found.set(rel, join10(root, rel));
+    else found.set(pattern, abs);
+  }
+  return [...found].sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
+}
+function walk(root, dir) {
+  const prefix = dir && !dir.endsWith("/") ? `${dir}/` : dir;
+  const abs = join10(root, prefix);
+  if (!existsSync10(abs) || !statSync5(abs).isDirectory()) return [];
+  const out = [];
+  for (const entry of readdirSync3(abs, { withFileTypes: true })) {
+    const rel = `${prefix}${entry.name}`;
+    if (entry.isDirectory()) {
+      if (!SKIP_DIRS.has(entry.name)) out.push(...walk(root, rel));
+    } else if (entry.isFile()) {
+      out.push(rel);
+    }
+  }
+  return out;
+}
+function globRegex(pattern) {
+  let re = "";
+  for (let i = 0; i < pattern.length; i++) {
+    const c = pattern[i];
+    if (c === "*" && pattern[i + 1] === "*") {
+      const slash = pattern[i + 2] === "/";
+      re += slash ? "(?:.*/)?" : ".*";
+      i += slash ? 2 : 1;
+    } else if (c === "*") re += "[^/]*";
+    else if (c === "?") re += "[^/]";
+    else re += c.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+  }
+  return new RegExp(`^${re}$`);
+}
+function readApproved(root) {
+  try {
+    const data = JSON.parse(readFileSync9(join10(root, VERIFY_STATE_FILE), "utf8"));
+    return data && typeof data === "object" && !Array.isArray(data) ? data : {};
+  } catch {
+    return {};
+  }
+}
+function writeApproved(root, approved) {
+  const file = join10(root, VERIFY_STATE_FILE);
+  mkdirSync4(dirname4(file), { recursive: true });
+  writeFileSync5(file, `${JSON.stringify(approved, null, 2)}
+`);
+}
+function logPath(root, now) {
+  const pad = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  for (let n = 1; ; n++) {
+    const rel = `${VERIFY_DIR}/${stamp}${n > 1 ? `-${n}` : ""}.log`;
+    if (!existsSync10(join10(root, rel))) return rel;
+  }
+}
+
+// src/init.ts
+import { constants, copyFileSync as copyFileSync2, existsSync as existsSync11, mkdirSync as mkdirSync5, readFileSync as readFileSync10, writeFileSync as writeFileSync6 } from "node:fs";
+import { dirname as dirname5, join as join11, resolve as resolve4 } from "node:path";
+import { fileURLToPath } from "node:url";
+var DEV_DIRS = [".dev", ".dev/plans", ".dev/memory", ".dev/errors", ".dev/templates", ".dev/.local"];
+var IGNORED = [".dev/.local/", ".dev/memory/index.md", ".dev/errors/index.md"];
+function pluginTemplatesDir() {
+  return resolve4(dirname5(fileURLToPath(import.meta.url)), "..", "templates");
+}
+function init(root, templatesDir = pluginTemplatesDir()) {
+  const actions = [];
+  for (const dir of DEV_DIRS) {
+    const path = join11(root, dir);
+    if (!existsSync11(path)) {
+      mkdirSync5(path, { recursive: true });
+      actions.push(`criado      ${dir}/`);
+    }
+  }
+  const template = join11(root, ".dev/templates/plan.md");
+  if (!existsSync11(template)) {
+    copyFileSync2(join11(templatesDir, "plan.md"), template, constants.COPYFILE_EXCL);
+    actions.push("criado      .dev/templates/plan.md");
+  }
+  const gitignore = join11(root, ".gitignore");
+  const current = existsSync11(gitignore) ? readFileSync10(gitignore, "utf8") : null;
+  const existing = new Set((current ?? "").split(/\r?\n/).map((l) => l.trim().replace(/^\//, "").replace(/\/$/, "")));
+  const missing = IGNORED.filter((rule) => !existing.has(rule.replace(/\/$/, "")));
+  if (missing.length) {
+    const eol = current?.includes("\r\n") ? "\r\n" : "\n";
+    const prefix = current && !current.endsWith("\n") ? eol : "";
+    writeFileSync6(gitignore, `${current ?? ""}${prefix}${missing.map((rule) => `${rule}${eol}`).join("")}`);
+    actions.push(`${current === null ? "criado    " : "atualizado"}  .gitignore (${missing.join(", ")})`);
+  }
+  return actions;
+}
+
 // src/memory/entry.ts
+import { existsSync as existsSync12, mkdirSync as mkdirSync6, writeFileSync as writeFileSync7 } from "node:fs";
+import { join as join12 } from "node:path";
 var PLACEHOLDERS = ["<t\xEDtulo>", "<O que vale", "<Detalhes que"];
 function newEntry(root, track, slug, today = localDate()) {
   if (!TRACKS.includes(track)) throw new ProjectError(`trilha "${track}" inv\xE1lida: use --track ${TRACKS.join(" | ")}`);
   const [slugProblem] = slugProblems(slug);
   if (slugProblem) throw new ProjectError(slugProblem);
-  if (!existsSync7(join7(root, ".dev"))) throw new ProjectError("pasta .dev/ n\xE3o encontrada: rode betterdev init antes");
+  if (!existsSync12(join12(root, ".dev"))) throw new ProjectError("pasta .dev/ n\xE3o encontrada: rode betterdev init antes");
   for (const t of TRACKS) {
     const existing = `${TRACK_DIRS[t]}/${slug}.md`;
-    if (existsSync7(join7(root, existing))) {
+    if (existsSync12(join12(root, existing))) {
       const hint = t === "bug" ? " (se \xE9 o mesmo erro, incremente occurrences)" : "";
       throw new ProjectError(`j\xE1 existe ${existing}: atualize essa entrada${hint} ou escolha outro slug`);
     }
   }
   const rel = `${TRACK_DIRS[track]}/${slug}.md`;
-  mkdirSync4(join7(root, TRACK_DIRS[track]), { recursive: true });
-  writeFileSync5(join7(root, rel), entryTemplate(track, today), { flag: "wx" });
+  mkdirSync6(join12(root, TRACK_DIRS[track]), { recursive: true });
+  writeFileSync7(join12(root, rel), entryTemplate(track, today), { flag: "wx" });
   return rel;
 }
 function entryTemplate(track, today) {
@@ -8172,83 +8578,13 @@ function localDate(now = /* @__PURE__ */ new Date()) {
 }
 
 // src/memory/lint.ts
-import { existsSync as existsSync9, readFileSync as readFileSync8 } from "node:fs";
-import { basename as basename3, dirname as dirname4, join as join9, resolve as resolve5 } from "node:path";
-
-// src/memory/reindex.ts
-import { existsSync as existsSync8, readFileSync as readFileSync7, statSync as statSync3, writeFileSync as writeFileSync6 } from "node:fs";
-import { join as join8 } from "node:path";
-var INDEX_HEADER = "<!-- GERADO por betterdev reindex; n\xE3o editar -->";
-var INDEX_MAX_LINES = 200;
-var INDEX_TITLES = { conhecimento: "Mem\xF3ria", bug: "Erros" };
-function indexLine(entry) {
-  const f = entryFields(entry);
-  const kind = `${f.track || "?"}/${f.type || "?"}`;
-  return `- [${entry.slug}](${entry.slug}.md) \xB7 ${kind} \xB7 ${f.module || "?"} \xB7 ${f.tags.join(", ") || "?"} - ${f.summary || "?"}`;
-}
-function buildIndex(track, entries) {
-  const key = (e) => {
-    const module = entryFields(e).module;
-    return [module.toLowerCase(), module, e.slug];
-  };
-  const sorted = [...entries].sort((a, b) => compareKeys(key(a), key(b)));
-  const count = `${sorted.length} ${sorted.length === 1 ? "entrada" : "entradas"}`;
-  return [INDEX_HEADER, `# ${INDEX_TITLES[track]} \xB7 ${count}`, "", ...sorted.map(indexLine), ""].join("\n");
-}
-function indexLineCount(content) {
-  return content.endsWith("\n") ? content.split("\n").length - 1 : content.split("\n").length;
-}
-function loadTrack(root, track) {
-  const entries = [];
-  const skipped = [];
-  for (const file of listEntryFiles(join8(root, TRACK_DIRS[track]))) {
-    try {
-      entries.push(readEntry(file));
-    } catch (err) {
-      if (!(err instanceof EntryParseError)) throw err;
-      skipped.push({ path: file, line: err.line, message: err.message });
-    }
-  }
-  return { entries, skipped };
-}
-function reindex(root) {
-  const results = [];
-  for (const track of TRACKS) {
-    const dir = join8(root, TRACK_DIRS[track]);
-    if (!existsSync8(dir) || !statSync3(dir).isDirectory()) continue;
-    const { entries, skipped } = loadTrack(root, track);
-    const content = buildIndex(track, entries);
-    const file = join8(dir, INDEX_FILE);
-    const changed = !existsSync8(file) || readFileSync7(file, "utf8") !== content;
-    if (changed) writeFileSync6(file, content);
-    const lines = indexLineCount(content);
-    results.push({
-      track,
-      path: `${TRACK_DIRS[track]}/${INDEX_FILE}`,
-      entries: entries.length,
-      lines,
-      changed,
-      overBudget: lines > INDEX_MAX_LINES,
-      skipped
-    });
-  }
-  return results;
-}
-function compareKeys(a, b) {
-  for (let i = 0; i < a.length; i++) {
-    const x = a[i];
-    const y = b[i];
-    if (x !== y) return x < y ? -1 : 1;
-  }
-  return 0;
-}
-
-// src/memory/lint.ts
+import { existsSync as existsSync13, readFileSync as readFileSync11 } from "node:fs";
+import { basename as basename3, dirname as dirname6, join as join13, resolve as resolve5 } from "node:path";
 var ENTRY_MAX_LINES = 40;
 var CLAUDE_MD_MAX_LINES = 150;
 var DIR_TRACKS = { memory: "conhecimento", errors: "bug" };
 function trackOfPath(path) {
-  return DIR_TRACKS[basename3(dirname4(resolve5(path)))] ?? null;
+  return DIR_TRACKS[basename3(dirname6(resolve5(path)))] ?? null;
 }
 function isEntryPath(path) {
   return path.endsWith(".md") && basename3(path) !== INDEX_FILE && trackOfPath(path) !== null;
@@ -8299,24 +8635,24 @@ function lintMemory(root, targets) {
     return { file, problems };
   });
   for (const { track, dir } of dirs) {
-    if (targets && !targetFiles.some((f) => dirname4(f) === dir)) continue;
-    const inDir = [...entries.values()].filter((e) => dirname4(resolve5(e.path)) === dir);
+    if (targets && !targetFiles.some((f) => dirname6(f) === dir)) continue;
+    const inDir = [...entries.values()].filter((e) => dirname6(resolve5(e.path)) === dir);
     const lines = indexLineCount(buildIndex(track, inDir));
     if (lines > INDEX_MAX_LINES) {
       out.push({
-        file: join9(dir, INDEX_FILE),
+        file: join13(dir, INDEX_FILE),
         problems: [{ line: 1, severity: "erro", code: "index-too-long", message: `o \xEDndice teria ${lines} linhas (m\xE1ximo ${INDEX_MAX_LINES}): funda ou remova entradas` }]
       });
     }
   }
   if (!targets) {
-    const claude = join9(root, ".dev", "CLAUDE.md");
-    if (existsSync9(claude)) out.push({ file: claude, problems: lintClaudeMd(claude) });
+    const claude = join13(root, ".dev", "CLAUDE.md");
+    if (existsSync13(claude)) out.push({ file: claude, problems: lintClaudeMd(claude) });
   }
   return out;
 }
 function lintClaudeMd(path) {
-  const lines = indexLineCount(readFileSync8(path, "utf8"));
+  const lines = indexLineCount(readFileSync11(path, "utf8"));
   return lines > CLAUDE_MD_MAX_LINES ? [{ line: CLAUDE_MD_MAX_LINES + 1, severity: "erro", code: "claude-md-too-long", message: `.dev/CLAUDE.md tem ${lines} linhas (m\xE1ximo ${CLAUDE_MD_MAX_LINES})` }] : [];
 }
 function corpusProblems(entries) {
@@ -8405,7 +8741,7 @@ function editDistance(a, b) {
 }
 
 // src/memory/recall.ts
-import { readFileSync as readFileSync9 } from "node:fs";
+import { readFileSync as readFileSync12 } from "node:fs";
 import { relative as relative3, sep as sep3 } from "node:path";
 var RECALL_LIMIT = 5;
 var FULL_LIMIT = 3;
@@ -8503,7 +8839,7 @@ function formatRecall(root, hits, options = {}) {
   });
   if (options.full) {
     hits.slice(0, FULL_LIMIT).forEach((hit, i) => {
-      const content = readFileSync9(hit.entry.path, "utf8").replace(/\r\n/g, "\n").replace(/\n+$/, "");
+      const content = readFileSync12(hit.entry.path, "utf8").replace(/\r\n/g, "\n").replace(/\n+$/, "");
       out.push("", `===== ${paths[i]} =====`, content);
     });
   }
@@ -8549,13 +8885,13 @@ function yamlEntry(plan, phaseId) {
 }
 
 // src/plan/lint.ts
-import { readFileSync as readFileSync10 } from "node:fs";
+import { readFileSync as readFileSync13 } from "node:fs";
 var COMMIT_TYPES = ["feat", "fix", "refactor", "test", "docs", "chore", "perf", "style", "build", "ci"];
 var COMMIT_MSG = new RegExp(`^(${COMMIT_TYPES.join("|")}): \\S`);
 var PHASE_ID = /^f\d+$/;
 var OBJECTIVE_MAX_LINES = 3;
 function lintPlanFile(path) {
-  return lintPlanSource(readFileSync10(path, "utf8"));
+  return lintPlanSource(readFileSync13(path, "utf8"));
 }
 function lintPlanSource(source) {
   try {
@@ -8747,6 +9083,8 @@ comandos:
   hooks install|uninstall     instala ou remove o git hook prepare-commit-msg
   commit-msg <arquivo> [origem]
                               usado pelo git hook: preenche a mensagem e o trailer da fase ativa
+  hook session-start|stop|post-compact
+                              usado pelos hooks do Claude Code, com o JSON do evento no stdin
 
 op\xE7\xF5es gerais:
   -h, --help                  mostra esta ajuda
@@ -8756,20 +9094,20 @@ var commands = {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     const cwd = process.cwd();
     const root = findProjectRoot(cwd);
-    const mdFiles = (dir) => readdirSync3(dir).filter((f) => f.endsWith(".md")).sort().map((f) => join10(dir, f));
+    const mdFiles = (dir) => readdirSync4(dir).filter((f) => f.endsWith(".md")).sort().map((f) => join14(dir, f));
     const plans = [];
     const entries = [];
     const claudeMds = [];
     let missing = 0;
-    if (!positionals.length && existsSync10(join10(root, PLANS_DIR))) plans.push(...mdFiles(join10(root, PLANS_DIR)));
+    if (!positionals.length && existsSync14(join14(root, PLANS_DIR))) plans.push(...mdFiles(join14(root, PLANS_DIR)));
     for (const target of positionals) {
       const abs = resolve6(cwd, target);
-      if (!existsSync10(abs)) {
+      if (!existsSync14(abs)) {
         console.error(`betterdev lint: caminho n\xE3o encontrado: ${target}`);
         missing++;
         continue;
       }
-      for (const file of statSync4(abs).isDirectory() ? mdFiles(abs) : [abs]) {
+      for (const file of statSync6(abs).isDirectory() ? mdFiles(abs) : [abs]) {
         if (isEntryPath(file)) entries.push(file);
         else if (trackOfPath(file)) continue;
         else if (basename4(file) === "CLAUDE.md") claudeMds.push(file);
@@ -8910,6 +9248,28 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     }
     return 0;
   },
+  // Chamado pelos hooks do Claude Code (hooks/hooks.json), com o JSON do evento no stdin.
+  // Nunca sai com 2: no Stop, o código 2 bloquearia o fim do turno. Erro interno sai com 1, que o Claude Code só exibe.
+  hook(args) {
+    const [event, ...rest] = args;
+    const run = event ? HOOKS[event] : void 0;
+    if (!run || rest.length) {
+      console.error(`betterdev hook: uso: betterdev hook ${Object.keys(HOOKS).join(" | ")}`);
+      return 1;
+    }
+    try {
+      const input = parseHookInput(readStdin());
+      const root = hookProjectRoot(input);
+      if (!root) return 0;
+      const output = run(root, input);
+      if (output) process.stdout.write(`${JSON.stringify(output)}
+`);
+    } catch (err) {
+      console.error(`betterdev hook ${event}: ${err.message}`);
+      return 1;
+    }
+    return 0;
+  },
   // Chamado pelo git hook: avisa no stderr, mas nunca falha e nunca bloqueia o commit.
   "commit-msg"(args) {
     try {
@@ -8924,8 +9284,24 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     return 0;
   }
 };
+var HOOKS = {
+  "session-start": (root, input) => sessionStart(root, input).output,
+  stop: (root, input) => stopHook(root, input).output,
+  "post-compact": (root, input) => {
+    postCompact(root, input);
+    return void 0;
+  }
+};
+function readStdin() {
+  if (process.stdin.isTTY) return "";
+  try {
+    return readFileSync14(0, "utf8");
+  } catch {
+    return "";
+  }
+}
 function onPath(name) {
-  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync10(join10(dir, name)) || existsSync10(join10(dir, `${name}.exe`)));
+  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync14(join14(dir, name)) || existsSync14(join14(dir, `${name}.exe`)));
 }
 var UsageError = class extends Error {
 };
