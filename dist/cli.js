@@ -1506,7 +1506,7 @@ var require_stringify = __commonJS({
         props.push(doc.directives.tagString(tag));
       return props.join(" ");
     }
-    function stringify2(item, ctx, onComment, onChompKeep) {
+    function stringify3(item, ctx, onComment, onChompKeep) {
       if (identity.isPair(item))
         return item.toString(ctx, onComment, onChompKeep);
       if (identity.isAlias(item)) {
@@ -1535,7 +1535,7 @@ var require_stringify = __commonJS({
 ${ctx.indent}${str}`;
     }
     exports.createStringifyContext = createStringifyContext;
-    exports.stringify = stringify2;
+    exports.stringify = stringify3;
   }
 });
 
@@ -1545,7 +1545,7 @@ var require_stringifyPair = __commonJS({
     "use strict";
     var identity = require_identity();
     var Scalar = require_Scalar();
-    var stringify2 = require_stringify();
+    var stringify3 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyPair({ key, value }, ctx, onComment, onChompKeep) {
       const { allNullValues, doc, indent, indentStep, options: { commentString, indentSeq, simpleKeys } } = ctx;
@@ -1567,7 +1567,7 @@ var require_stringifyPair = __commonJS({
       });
       let keyCommentDone = false;
       let chompKeep = false;
-      let str = stringify2.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
+      let str = stringify3.stringify(key, ctx, () => keyCommentDone = true, () => chompKeep = true);
       if (!explicitKey && !ctx.inFlow && str.length > 1024) {
         if (simpleKeys)
           throw new Error("With simple keys, single line scalar must not span more than 1024 characters");
@@ -1619,7 +1619,7 @@ ${indent}:`;
         ctx.indent = ctx.indent.substring(2);
       }
       let valueCommentDone = false;
-      const valueStr = stringify2.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
+      const valueStr = stringify3.stringify(value, ctx, () => valueCommentDone = true, () => chompKeep = true);
       let ws = " ";
       if (keyComment || vsb || vcb) {
         ws = vsb ? "\n" : "";
@@ -1760,7 +1760,7 @@ var require_addPairToJSMap = __commonJS({
     "use strict";
     var log = require_log();
     var merge = require_merge();
-    var stringify2 = require_stringify();
+    var stringify3 = require_stringify();
     var identity = require_identity();
     var toJS = require_toJS();
     function addPairToJSMap(ctx, map, { key, value }) {
@@ -1796,7 +1796,7 @@ var require_addPairToJSMap = __commonJS({
       if (typeof jsKey !== "object")
         return String(jsKey);
       if (identity.isNode(key) && ctx?.doc) {
-        const strCtx = stringify2.createStringifyContext(ctx.doc, {});
+        const strCtx = stringify3.createStringifyContext(ctx.doc, {});
         strCtx.anchors = /* @__PURE__ */ new Set();
         for (const node of ctx.anchors.keys())
           strCtx.anchors.add(node.anchor);
@@ -1863,12 +1863,12 @@ var require_stringifyCollection = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyCollection.js"(exports) {
     "use strict";
     var identity = require_identity();
-    var stringify2 = require_stringify();
+    var stringify3 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyCollection(collection, ctx, options) {
       const flow = ctx.inFlow ?? collection.flow;
-      const stringify3 = flow ? stringifyFlowCollection : stringifyBlockCollection;
-      return stringify3(collection, ctx, options);
+      const stringify4 = flow ? stringifyFlowCollection : stringifyBlockCollection;
+      return stringify4(collection, ctx, options);
     }
     function stringifyBlockCollection({ comment, items }, ctx, { blockItemPrefix, flowChars, itemIndent, onChompKeep, onComment }) {
       const { indent, options: { commentString } } = ctx;
@@ -1893,7 +1893,7 @@ var require_stringifyCollection = __commonJS({
           }
         }
         chompKeep = false;
-        let str2 = stringify2.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
+        let str2 = stringify3.stringify(item, itemCtx, () => comment2 = null, () => chompKeep = true);
         if (comment2)
           str2 += stringifyComment.lineComment(str2, itemIndent, commentString(comment2));
         if (chompKeep && comment2)
@@ -1960,7 +1960,7 @@ ${indent}${line}` : "\n";
         }
         if (comment)
           reqNewline = true;
-        let str = stringify2.stringify(item, itemCtx, () => comment = null);
+        let str = stringify3.stringify(item, itemCtx, () => comment = null);
         reqNewline || (reqNewline = lines.length > linesAtValue || str.includes("\n"));
         if (i < items.length - 1) {
           str += ",";
@@ -3321,7 +3321,7 @@ var require_stringifyDocument = __commonJS({
   "node_modules/yaml/dist/stringify/stringifyDocument.js"(exports) {
     "use strict";
     var identity = require_identity();
-    var stringify2 = require_stringify();
+    var stringify3 = require_stringify();
     var stringifyComment = require_stringifyComment();
     function stringifyDocument(doc, options) {
       const lines = [];
@@ -3336,7 +3336,7 @@ var require_stringifyDocument = __commonJS({
       }
       if (hasDirectives)
         lines.push("---");
-      const ctx = stringify2.createStringifyContext(doc, options);
+      const ctx = stringify3.createStringifyContext(doc, options);
       const { commentString } = ctx.options;
       if (doc.commentBefore) {
         if (lines.length !== 1)
@@ -3358,7 +3358,7 @@ var require_stringifyDocument = __commonJS({
           contentComment = doc.contents.comment;
         }
         const onChompKeep = contentComment ? void 0 : () => chompKeep = true;
-        let body = stringify2.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
+        let body = stringify3.stringify(doc.contents, ctx, () => contentComment = null, onChompKeep);
         if (contentComment)
           body += stringifyComment.lineComment(body, "", commentString(contentComment));
         if ((body[0] === "|" || body[0] === ">") && lines[lines.length - 1] === "---") {
@@ -3366,7 +3366,7 @@ var require_stringifyDocument = __commonJS({
         } else
           lines.push(body);
       } else {
-        lines.push(stringify2.stringify(doc.contents, ctx));
+        lines.push(stringify3.stringify(doc.contents, ctx));
       }
       if (doc.directives?.docEnd) {
         if (doc.comment) {
@@ -3999,10 +3999,10 @@ var require_resolve_block_map = __commonJS({
       let offset = bm.offset;
       let commentEnd = null;
       for (const collItem of bm.items) {
-        const { start, key, sep: sep5, value } = collItem;
+        const { start, key, sep: sep6, value } = collItem;
         const keyProps = resolveProps.resolveProps(start, {
           indicator: "explicit-key-ind",
-          next: key ?? sep5?.[0],
+          next: key ?? sep6?.[0],
           offset,
           onError,
           parentIndent: bm.indent,
@@ -4016,7 +4016,7 @@ var require_resolve_block_map = __commonJS({
             else if ("indent" in key && key.indent !== bm.indent)
               onError(offset, "BAD_INDENT", startColMsg);
           }
-          if (!keyProps.anchor && !keyProps.tag && !sep5) {
+          if (!keyProps.anchor && !keyProps.tag && !sep6) {
             commentEnd = keyProps.end;
             if (keyProps.comment) {
               if (map.comment)
@@ -4040,7 +4040,7 @@ var require_resolve_block_map = __commonJS({
         ctx.atKey = false;
         if (utilMapIncludes.mapIncludes(ctx, map.items, keyNode))
           onError(keyStart, "DUPLICATE_KEY", "Map keys must be unique");
-        const valueProps = resolveProps.resolveProps(sep5 ?? [], {
+        const valueProps = resolveProps.resolveProps(sep6 ?? [], {
           indicator: "map-value-ind",
           next: value,
           offset: keyNode.range[2],
@@ -4056,7 +4056,7 @@ var require_resolve_block_map = __commonJS({
             if (ctx.options.strict && keyProps.start < valueProps.found.offset - 1024)
               onError(keyNode.range, "KEY_OVER_1024_CHARS", "The : indicator must be at most 1024 chars after the start of an implicit block mapping key");
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep5, null, valueProps, onError);
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : composeEmptyNode(ctx, offset, sep6, null, valueProps, onError);
           if (ctx.schema.compat)
             utilFlowIndentCheck.flowIndentCheck(bm.indent, value, onError);
           offset = valueNode.range[2];
@@ -4147,7 +4147,7 @@ var require_resolve_end = __commonJS({
       let comment = "";
       if (end) {
         let hasSpace = false;
-        let sep5 = "";
+        let sep6 = "";
         for (const token of end) {
           const { source, type } = token;
           switch (type) {
@@ -4161,13 +4161,13 @@ var require_resolve_end = __commonJS({
               if (!comment)
                 comment = cb;
               else
-                comment += sep5 + cb;
-              sep5 = "";
+                comment += sep6 + cb;
+              sep6 = "";
               break;
             }
             case "newline":
               if (comment)
-                sep5 += source;
+                sep6 += source;
               hasSpace = true;
               break;
             default:
@@ -4210,18 +4210,18 @@ var require_resolve_flow_collection = __commonJS({
       let offset = fc.offset + fc.start.source.length;
       for (let i = 0; i < fc.items.length; ++i) {
         const collItem = fc.items[i];
-        const { start, key, sep: sep5, value } = collItem;
+        const { start, key, sep: sep6, value } = collItem;
         const props = resolveProps.resolveProps(start, {
           flow: fcName,
           indicator: "explicit-key-ind",
-          next: key ?? sep5?.[0],
+          next: key ?? sep6?.[0],
           offset,
           onError,
           parentIndent: fc.indent,
           startOnNewline: false
         });
         if (!props.found) {
-          if (!props.anchor && !props.tag && !sep5 && !value) {
+          if (!props.anchor && !props.tag && !sep6 && !value) {
             if (i === 0 && props.comma)
               onError(props.comma, "UNEXPECTED_TOKEN", `Unexpected , in ${fcName}`);
             else if (i < fc.items.length - 1)
@@ -4275,8 +4275,8 @@ var require_resolve_flow_collection = __commonJS({
             }
           }
         }
-        if (!isMap3 && !sep5 && !props.found) {
-          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep5, null, props, onError);
+        if (!isMap3 && !sep6 && !props.found) {
+          const valueNode = value ? composeNode(ctx, value, props, onError) : composeEmptyNode(ctx, props.end, sep6, null, props, onError);
           coll.items.push(valueNode);
           offset = valueNode.range[2];
           if (isBlock(value))
@@ -4288,7 +4288,7 @@ var require_resolve_flow_collection = __commonJS({
           if (isBlock(key))
             onError(keyNode.range, "BLOCK_IN_FLOW", blockMsg);
           ctx.atKey = false;
-          const valueProps = resolveProps.resolveProps(sep5 ?? [], {
+          const valueProps = resolveProps.resolveProps(sep6 ?? [], {
             flow: fcName,
             indicator: "map-value-ind",
             next: value,
@@ -4299,8 +4299,8 @@ var require_resolve_flow_collection = __commonJS({
           });
           if (valueProps.found) {
             if (!isMap3 && !props.found && ctx.options.strict) {
-              if (sep5)
-                for (const st of sep5) {
+              if (sep6)
+                for (const st of sep6) {
                   if (st === valueProps.found)
                     break;
                   if (st.type === "newline") {
@@ -4317,7 +4317,7 @@ var require_resolve_flow_collection = __commonJS({
             else
               onError(valueProps.start, "MISSING_CHAR", `Missing , or : between ${fcName} items`);
           }
-          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep5, null, valueProps, onError) : null;
+          const valueNode = value ? composeNode(ctx, value, valueProps, onError) : valueProps.found ? composeEmptyNode(ctx, valueProps.end, sep6, null, valueProps, onError) : null;
           if (valueNode) {
             if (isBlock(value))
               onError(valueNode.range, "BLOCK_IN_FLOW", blockMsg);
@@ -4497,7 +4497,7 @@ var require_resolve_block_scalar = __commonJS({
           chompStart = i + 1;
       }
       let value = "";
-      let sep5 = "";
+      let sep6 = "";
       let prevMoreIndented = false;
       for (let i = 0; i < contentStart; ++i)
         value += lines[i][0].slice(trimIndent) + "\n";
@@ -4514,24 +4514,24 @@ var require_resolve_block_scalar = __commonJS({
           indent = "";
         }
         if (type === Scalar.Scalar.BLOCK_LITERAL) {
-          value += sep5 + indent.slice(trimIndent) + content;
-          sep5 = "\n";
+          value += sep6 + indent.slice(trimIndent) + content;
+          sep6 = "\n";
         } else if (indent.length > trimIndent || content[0] === "	") {
-          if (sep5 === " ")
-            sep5 = "\n";
-          else if (!prevMoreIndented && sep5 === "\n")
-            sep5 = "\n\n";
-          value += sep5 + indent.slice(trimIndent) + content;
-          sep5 = "\n";
+          if (sep6 === " ")
+            sep6 = "\n";
+          else if (!prevMoreIndented && sep6 === "\n")
+            sep6 = "\n\n";
+          value += sep6 + indent.slice(trimIndent) + content;
+          sep6 = "\n";
           prevMoreIndented = true;
         } else if (content === "") {
-          if (sep5 === "\n")
+          if (sep6 === "\n")
             value += "\n";
           else
-            sep5 = "\n";
+            sep6 = "\n";
         } else {
-          value += sep5 + content;
-          sep5 = " ";
+          value += sep6 + content;
+          sep6 = " ";
           prevMoreIndented = false;
         }
       }
@@ -4714,25 +4714,25 @@ var require_resolve_flow_scalar = __commonJS({
         trimBoth = /^[ \t]+|[ \t]+$/g;
       }
       let res = match[1].replace(trimEnd, "");
-      let sep5 = " ";
+      let sep6 = " ";
       let pos = line.lastIndex;
       while (match = line.exec(source)) {
         const lm = match[1].replace(trimBoth, "");
         if (lm === "") {
-          if (sep5 === "\n")
-            res += sep5;
+          if (sep6 === "\n")
+            res += sep6;
           else
-            sep5 = "\n";
+            sep6 = "\n";
         } else {
-          res += sep5 + lm;
-          sep5 = " ";
+          res += sep6 + lm;
+          sep6 = " ";
         }
         pos = line.lastIndex;
       }
       const last = /[ \t]*(.*)/sy;
       last.lastIndex = pos;
       match = last.exec(source);
-      return res + sep5 + (match?.[1] ?? "");
+      return res + sep6 + (match?.[1] ?? "");
     }
     function doubleQuotedValue(source, onError) {
       let res = "";
@@ -5502,7 +5502,7 @@ var require_cst_scalar = __commonJS({
 var require_cst_stringify = __commonJS({
   "node_modules/yaml/dist/parse/cst-stringify.js"(exports) {
     "use strict";
-    var stringify2 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
+    var stringify3 = (cst) => "type" in cst ? stringifyToken(cst) : stringifyItem(cst);
     function stringifyToken(token) {
       switch (token.type) {
         case "block-scalar": {
@@ -5542,20 +5542,20 @@ var require_cst_stringify = __commonJS({
         }
       }
     }
-    function stringifyItem({ start, key, sep: sep5, value }) {
+    function stringifyItem({ start, key, sep: sep6, value }) {
       let res = "";
       for (const st of start)
         res += st.source;
       if (key)
         res += stringifyToken(key);
-      if (sep5)
-        for (const st of sep5)
+      if (sep6)
+        for (const st of sep6)
           res += st.source;
       if (value)
         res += stringifyToken(value);
       return res;
     }
-    exports.stringify = stringify2;
+    exports.stringify = stringify3;
   }
 });
 
@@ -6716,18 +6716,18 @@ var require_parser = __commonJS({
         if (this.type === "map-value-ind") {
           const prev = getPrevProps(this.peek(2));
           const start = getFirstKeyStartProps(prev);
-          let sep5;
+          let sep6;
           if (scalar.end) {
-            sep5 = scalar.end;
-            sep5.push(this.sourceToken);
+            sep6 = scalar.end;
+            sep6.push(this.sourceToken);
             delete scalar.end;
           } else
-            sep5 = [this.sourceToken];
+            sep6 = [this.sourceToken];
           const map = {
             type: "block-map",
             offset: scalar.offset,
             indent: scalar.indent,
-            items: [{ start, key: scalar, sep: sep5 }]
+            items: [{ start, key: scalar, sep: sep6 }]
           };
           this.onKeyLine = true;
           this.stack[this.stack.length - 1] = map;
@@ -6880,15 +6880,15 @@ var require_parser = __commonJS({
                 } else if (isFlowToken(it.key) && !includesToken(it.sep, "newline")) {
                   const start2 = getFirstKeyStartProps(it.start);
                   const key = it.key;
-                  const sep5 = it.sep;
-                  sep5.push(this.sourceToken);
+                  const sep6 = it.sep;
+                  sep6.push(this.sourceToken);
                   delete it.key;
                   delete it.sep;
                   this.stack.push({
                     type: "block-map",
                     offset: this.offset,
                     indent: this.indent,
-                    items: [{ start: start2, key, sep: sep5 }]
+                    items: [{ start: start2, key, sep: sep6 }]
                   });
                 } else if (start.length > 0) {
                   it.sep = it.sep.concat(start, this.sourceToken);
@@ -7082,13 +7082,13 @@ var require_parser = __commonJS({
             const prev = getPrevProps(parent);
             const start = getFirstKeyStartProps(prev);
             fixFlowSeqItems(fc);
-            const sep5 = fc.end.splice(1, fc.end.length);
-            sep5.push(this.sourceToken);
+            const sep6 = fc.end.splice(1, fc.end.length);
+            sep6.push(this.sourceToken);
             const map = {
               type: "block-map",
               offset: fc.offset,
               indent: fc.indent,
-              items: [{ start, key: fc, sep: sep5 }]
+              items: [{ start, key: fc, sep: sep6 }]
             };
             this.onKeyLine = true;
             this.stack[this.stack.length - 1] = map;
@@ -7285,7 +7285,7 @@ var require_public_api = __commonJS({
       }
       return doc.toJS(Object.assign({ reviver: _reviver }, options));
     }
-    function stringify2(value, replacer, options) {
+    function stringify3(value, replacer, options) {
       let _replacer = null;
       if (typeof replacer === "function" || Array.isArray(replacer)) {
         _replacer = replacer;
@@ -7310,7 +7310,7 @@ var require_public_api = __commonJS({
     exports.parse = parse;
     exports.parseAllDocuments = parseAllDocuments;
     exports.parseDocument = parseDocument3;
-    exports.stringify = stringify2;
+    exports.stringify = stringify3;
   }
 });
 
@@ -7367,8 +7367,8 @@ var require_dist = __commonJS({
 });
 
 // src/cli.ts
-import { existsSync as existsSync14, readFileSync as readFileSync14, readdirSync as readdirSync4, statSync as statSync6 } from "node:fs";
-import { basename as basename4, delimiter, join as join14, relative as relative4, resolve as resolve6, sep as sep4 } from "node:path";
+import { existsSync as existsSync16, readFileSync as readFileSync16, readdirSync as readdirSync6, statSync as statSync7 } from "node:fs";
+import { basename as basename5, delimiter, join as join17, relative as relative5, resolve as resolve8, sep as sep5 } from "node:path";
 import { parseArgs } from "node:util";
 
 // package.json
@@ -7444,10 +7444,10 @@ function readPlanSteps(cwd, { all = false } = {}) {
   const args = ["log", LOG_FORMAT, "--regexp-ignore-case", `--grep=${TRAILER_KEY}`];
   if (all) args.push("--all");
   for (const record of git(args, cwd).split("\n")) {
-    const sep5 = record.indexOf("");
-    if (sep5 < 0) continue;
-    const hash = record.slice(0, sep5).trim();
-    for (const value of record.slice(sep5 + 1).split("")) {
+    const sep6 = record.indexOf("");
+    if (sep6 < 0) continue;
+    const hash = record.slice(0, sep6).trim();
+    for (const value of record.slice(sep6 + 1).split("")) {
       const ref = value.replace(/\s+/g, " ").trim();
       if (!ref) continue;
       const commits = steps.get(ref) ?? [];
@@ -8846,8 +8846,95 @@ function formatRecall(root, hits, options = {}) {
   return out.join("\n");
 }
 
-// src/plan/brief.ts
+// src/migrate/split.ts
 var import_yaml3 = __toESM(require_dist(), 1);
+import { mkdirSync as mkdirSync7, readFileSync as readFileSync13, readdirSync as readdirSync4, rmSync as rmSync3, writeFileSync as writeFileSync8 } from "node:fs";
+import { join as join14, relative as relative4, resolve as resolve6, sep as sep4 } from "node:path";
+var MIGRATION_DIR = ".dev/.local/migration";
+var HEADING2 = /^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
+var FENCE3 = /^ {0,3}(`{3,}|~{3,})/;
+var CANDIDATE_FILE = /^\d{3,}\.md$/;
+function splitMarkdown(source, text) {
+  const lines = text.replace(/^﻿/, "").split(/\r?\n/);
+  const starts = [];
+  let fence = null;
+  lines.forEach((line, i) => {
+    const fenceMatch = FENCE3.exec(line);
+    if (fence) {
+      if (fenceMatch?.[1] && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length && line.trim() === fenceMatch[1]) fence = null;
+      return;
+    }
+    if (fenceMatch?.[1]) {
+      fence = fenceMatch[1];
+      return;
+    }
+    const m = HEADING2.exec(line);
+    if (m?.[1]) starts.push({ index: i, level: m[1].length, title: (m[2] ?? "").trim() });
+  });
+  const candidates = [];
+  const add = (from, to, path, hasHeading) => {
+    let first = from;
+    let last = to;
+    while (first <= last && !lines[first].trim()) first++;
+    while (last >= first && !lines[last].trim()) last--;
+    if (last < first || hasHeading && last === from) return;
+    candidates.push({ source, startLine: first + 1, endLine: last + 1, path, lines: lines.slice(first, last + 1) });
+  };
+  const docTitle = starts[0]?.level === 1 && starts.filter((s) => s.level === 1).length === 1 ? starts[0] : null;
+  add(0, (starts[0]?.index ?? lines.length) - 1, [], false);
+  const stack = [];
+  starts.forEach((h, i) => {
+    while (stack.length && stack[stack.length - 1].level >= h.level) stack.pop();
+    stack.push(h);
+    const path = stack.filter((s) => s !== docTitle || stack.length === 1).map((s) => s.title);
+    add(h.index, (starts[i + 1]?.index ?? lines.length) - 1, path, true);
+  });
+  return candidates;
+}
+function splitFiles(root, files) {
+  const candidates = files.flatMap((file) => {
+    const abs = resolve6(root, file);
+    return splitMarkdown(relative4(root, abs).split(sep4).join("/"), readFileSync13(abs, "utf8"));
+  });
+  const dir = join14(root, MIGRATION_DIR);
+  mkdirSync7(dir, { recursive: true });
+  const old = readdirSync4(dir).filter((f) => CANDIDATE_FILE.test(f));
+  for (const f of old) rmSync3(join14(dir, f));
+  const digits = Math.max(3, String(candidates.length).length);
+  const written = candidates.map((candidate, i) => {
+    const file = `${String(i + 1).padStart(digits, "0")}.md`;
+    writeFileSync8(join14(dir, file), candidateSource(candidate, file.replace(/\.md$/, "")));
+    return { file, candidate };
+  });
+  return { dir: MIGRATION_DIR, written, replaced: old.length };
+}
+function candidateSource(c, number) {
+  const meta = { candidato: number, origem: originLabel(c), secao: sectionLabel(c) };
+  return `---
+${(0, import_yaml3.stringify)(meta, { lineWidth: 0 })}---
+
+${c.lines.join("\n")}
+`;
+}
+function formatSplit(result) {
+  const width = Math.max(0, ...result.written.map(({ candidate }) => originLabel(candidate).length));
+  const out = result.written.map(({ file, candidate: c }) => {
+    const size = `${c.lines.length} ${c.lines.length === 1 ? "linha" : "linhas"}`;
+    return `${file.replace(/\.md$/, "")}  ${originLabel(c).padEnd(width)}  ${sectionLabel(c)} (${size})`;
+  });
+  const replaced = result.replaced ? `; ${result.replaced} de uma execu\xE7\xE3o anterior substitu\xEDdos` : "";
+  out.push(`${result.written.length} ${result.written.length === 1 ? "candidato" : "candidatos"} em ${result.dir}/${replaced}`);
+  return out.join("\n");
+}
+function originLabel(c) {
+  return `${c.source}:${c.startLine}-${c.endLine}`;
+}
+function sectionLabel(c) {
+  return c.path.length ? c.path.join(" \u203A ") : "(sem t\xEDtulo)";
+}
+
+// src/plan/brief.ts
+var import_yaml4 = __toESM(require_dist(), 1);
 var PLAN_SECTIONS = ["Contexto", "Fora do escopo"];
 function brief(entry, phaseId) {
   const { plan } = entry;
@@ -8871,7 +8958,7 @@ function yamlEntry(plan, phaseId) {
   const start = phase.yaml.line - 1;
   const first = plan.lines[start] ?? "";
   const dash = /^(\s*)-\s/.exec(first);
-  if (!dash) return (0, import_yaml3.stringify)([phase.yaml.data]).trimEnd();
+  if (!dash) return (0, import_yaml4.stringify)([phase.yaml.data]).trimEnd();
   const indent = dash[1].length;
   const closeIndex = plan.bodyStartLine - 2;
   const lines = [first];
@@ -8885,13 +8972,13 @@ function yamlEntry(plan, phaseId) {
 }
 
 // src/plan/lint.ts
-import { readFileSync as readFileSync13 } from "node:fs";
+import { readFileSync as readFileSync14 } from "node:fs";
 var COMMIT_TYPES = ["feat", "fix", "refactor", "test", "docs", "chore", "perf", "style", "build", "ci"];
 var COMMIT_MSG = new RegExp(`^(${COMMIT_TYPES.join("|")}): \\S`);
 var PHASE_ID = /^f\d+$/;
 var OBJECTIVE_MAX_LINES = 3;
 function lintPlanFile(path) {
-  return lintPlanSource(readFileSync13(path, "utf8"));
+  return lintPlanSource(readFileSync14(path, "utf8"));
 }
 function lintPlanSource(source) {
   try {
@@ -9063,6 +9150,266 @@ function sameTitle(a, b) {
   return a.trim().toLowerCase() === b.toLowerCase();
 }
 
+// src/stats/report.ts
+import { existsSync as existsSync15 } from "node:fs";
+import { join as join16 } from "node:path";
+
+// src/stats/transcripts.ts
+import { closeSync as closeSync2, existsSync as existsSync14, openSync as openSync2, readFileSync as readFileSync15, readSync, readdirSync as readdirSync5, statSync as statSync6 } from "node:fs";
+import { homedir } from "node:os";
+import { basename as basename4, join as join15, resolve as resolve7 } from "node:path";
+var EDIT_TOOLS = /* @__PURE__ */ new Set(["Edit", "MultiEdit", "Write", "NotebookEdit"]);
+var COMPACT_DROP = 0.5;
+function defaultProjectsDir(env = process.env) {
+  return join15(env.CLAUDE_CONFIG_DIR || join15(homedir(), ".claude"), "projects");
+}
+function projectSlug(projectPath) {
+  return projectPath.replace(/[^A-Za-z0-9]/g, "-");
+}
+function findTranscriptDirs(projectPath, projectsDir = defaultProjectsDir()) {
+  if (!existsSync14(projectsDir)) return [];
+  const dirs = readdirSync5(projectsDir).filter((name) => statSync6(join15(projectsDir, name)).isDirectory()).sort();
+  const slug = projectSlug(resolve7(projectPath)).toLowerCase();
+  const bySlug = dirs.filter((name) => name.toLowerCase() === slug);
+  if (bySlug.length) return bySlug.map((name) => join15(projectsDir, name));
+  const target = samePath(resolve7(projectPath));
+  return dirs.map((name) => join15(projectsDir, name)).filter((dir) => sessionFiles(dir).some((file) => {
+    const cwd = firstCwd(file);
+    return cwd !== null && samePath(cwd) === target;
+  }));
+}
+function sessionFiles(dir) {
+  return readdirSync5(dir).filter((f) => f.endsWith(".jsonl")).sort().map((f) => join15(dir, f));
+}
+function readSession(file) {
+  const records = parseJsonl(readFileSync15(file, "utf8")).filter((r) => !r.isSidechain);
+  let start = null;
+  let end = null;
+  for (const r of records) {
+    if (typeof r.timestamp !== "string" || Number.isNaN(Date.parse(r.timestamp))) continue;
+    if (start === null || r.timestamp < start) start = r.timestamp;
+    if (end === null || r.timestamp > end) end = r.timestamp;
+  }
+  const contexts = [];
+  const seenMessages = /* @__PURE__ */ new Set();
+  const seenTools = /* @__PURE__ */ new Set();
+  let toolCalls = 0;
+  let toolCallsBeforeEdit = null;
+  for (const r of records) {
+    if (r.type !== "assistant" || r.isApiErrorMessage || !r.message || r.message.model === "<synthetic>") continue;
+    const messageId = r.message.id ?? r.requestId ?? r.uuid ?? `#${contexts.length}`;
+    if (!seenMessages.has(messageId)) {
+      const context = contextTokens(r.message.usage);
+      if (context > 0) {
+        seenMessages.add(messageId);
+        contexts.push(context);
+      }
+    }
+    for (const block of Array.isArray(r.message.content) ? r.message.content : []) {
+      const tool = block;
+      if (tool?.type !== "tool_use") continue;
+      const key = tool.id ?? `${messageId}#${toolCalls}`;
+      if (seenTools.has(key)) continue;
+      seenTools.add(key);
+      if (toolCallsBeforeEdit === null && EDIT_TOOLS.has(tool.name ?? "")) toolCallsBeforeEdit = toolCalls;
+      toolCalls++;
+    }
+  }
+  const openingTokens = contexts[0];
+  if (openingTokens === void 0 || start === null || end === null) return null;
+  return {
+    id: basename4(file, ".jsonl"),
+    file,
+    start,
+    end,
+    durationMs: Date.parse(end) - Date.parse(start),
+    openingTokens,
+    toolCallsBeforeEdit,
+    toolCalls,
+    estimatedCompactions: estimateCompactions(contexts)
+  };
+}
+function estimateCompactions(contexts) {
+  let count = 0;
+  for (let i = 1; i < contexts.length; i++) {
+    if (contexts[i] < contexts[i - 1] * (1 - COMPACT_DROP)) count++;
+  }
+  return count;
+}
+function readCompactionMetrics(projectRoot) {
+  const file = join15(projectRoot, METRICS_FILE);
+  const counts = /* @__PURE__ */ new Map();
+  if (!existsSync14(file)) return counts;
+  for (const r of parseJsonl(readFileSync15(file, "utf8"))) {
+    if (typeof r.session_id !== "string" || !r.session_id) continue;
+    counts.set(r.session_id, (counts.get(r.session_id) ?? 0) + (r.evento === "compact" ? 1 : 0));
+  }
+  return counts;
+}
+function projectSessions(projectRoot, projectsDir = defaultProjectsDir()) {
+  const dirs = findTranscriptDirs(projectRoot, projectsDir);
+  const metrics = readCompactionMetrics(projectRoot);
+  const byId = /* @__PURE__ */ new Map();
+  let empty = 0;
+  for (const file of dirs.flatMap(sessionFiles)) {
+    const session = readSession(file);
+    if (!session) {
+      empty++;
+      continue;
+    }
+    if (byId.has(session.id)) continue;
+    const { estimatedCompactions, ...rest } = session;
+    const measured = metrics.get(session.id);
+    byId.set(session.id, {
+      ...rest,
+      compactions: measured ?? estimatedCompactions,
+      compactionsEstimated: measured === void 0
+    });
+  }
+  const sessions = [...byId.values()].sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : a.id < b.id ? -1 : 1);
+  return { dirs, sessions, empty };
+}
+function contextTokens(usage) {
+  if (!usage) return 0;
+  const n = (v) => typeof v === "number" && Number.isFinite(v) ? v : 0;
+  return n(usage.input_tokens) + n(usage.cache_read_input_tokens) + n(usage.cache_creation_input_tokens);
+}
+function parseJsonl(text) {
+  const out = [];
+  for (const line of text.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    try {
+      const data = JSON.parse(line);
+      if (data && typeof data === "object" && !Array.isArray(data)) out.push(data);
+    } catch {
+    }
+  }
+  return out;
+}
+function firstCwd(file) {
+  const fd = openSync2(file, "r");
+  try {
+    const buffer = Buffer.alloc(64 * 1024);
+    const bytes = readSync(fd, buffer, 0, buffer.length, 0);
+    const record = parseJsonl(buffer.toString("utf8", 0, bytes)).find((r) => typeof r.cwd === "string" && r.cwd);
+    return record?.cwd ?? null;
+  } finally {
+    closeSync2(fd);
+  }
+}
+function samePath(path) {
+  const normal = path.replace(/\\/g, "/").replace(/\/+$/, "");
+  return process.platform === "win32" ? normal.toLowerCase() : normal;
+}
+
+// src/stats/report.ts
+var DATE2 = /^(\d{4})-(\d{2})-(\d{2})$/;
+function isIsoDate(value) {
+  const m = DATE2.exec(value);
+  if (!m) return false;
+  const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+  const date = new Date(Date.UTC(y, mo - 1, d));
+  return date.getUTCFullYear() === y && date.getUTCMonth() === mo - 1 && date.getUTCDate() === d;
+}
+function localDate2(iso) {
+  const d = new Date(iso);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+function median(values) {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+}
+function buildReport(projectRoot, options = {}) {
+  const { dirs, sessions, empty } = projectSessions(projectRoot, options.projectsDir ?? defaultProjectsDir());
+  const rows = sessions.map(({ file: _file, ...s }) => ({ ...s, date: localDate2(s.start) }));
+  const repeatedErrors = readRepeatedErrors(projectRoot);
+  const splitAt = options.splitAt ?? null;
+  const periods = splitAt ? [
+    ["antes", rows.filter((s) => s.date < splitAt)],
+    ["depois", rows.filter((s) => s.date >= splitAt)]
+  ] : [["todas", rows]];
+  const groups = periods.map(([label, group], i) => summarize(label, group, i === periods.length - 1 ? repeatedErrors?.total ?? null : null));
+  return { project: projectRoot, splitAt, transcriptDirs: dirs, emptySessions: empty, sessions: rows, groups, repeatedErrors };
+}
+function summarize(label, sessions, repeatedErrors) {
+  const edited = sessions.map((s) => s.toolCallsBeforeEdit).filter((n) => n !== null);
+  const compactions = sessions.reduce((sum, s) => sum + s.compactions, 0);
+  return {
+    label,
+    sessions: sessions.length,
+    openingTokens: median(sessions.map((s) => s.openingTokens)),
+    toolCallsBeforeEdit: median(edited),
+    sessionsWithEdit: edited.length,
+    compactionsPerSession: sessions.length ? compactions / sessions.length : null,
+    compactionsEstimated: sessions.some((s) => s.compactionsEstimated),
+    repeatedErrors
+  };
+}
+function readRepeatedErrors(projectRoot) {
+  if (!existsSync15(join16(projectRoot, TRACK_DIRS.bug))) return null;
+  const entries = loadTrack(projectRoot, "bug").entries.map((e) => ({ slug: e.slug, occurrences: e.frontmatter.occurrences })).filter((e) => Number.isInteger(e.occurrences) && e.occurrences > 1);
+  return { total: entries.reduce((sum, e) => sum + e.occurrences - 1, 0), entries };
+}
+function formatNumber(value, decimals = 0) {
+  const [int, frac] = Math.abs(value).toFixed(decimals).split(".");
+  const grouped = (int ?? "0").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${value < 0 ? "-" : ""}${grouped}${frac ? `,${frac}` : ""}`;
+}
+function formatDuration(ms) {
+  const minutes = Math.round(ms / 6e4);
+  if (minutes < 1) return "<1min";
+  if (minutes < 60) return `${minutes}min`;
+  return `${Math.floor(minutes / 60)}h${String(minutes % 60).padStart(2, "0")}`;
+}
+function formatReport2(report) {
+  const out = [];
+  const plural = (n, one, many) => `${formatNumber(n)} ${n === 1 ? one : many}`;
+  const ignored = report.emptySessions ? ` (${plural(report.emptySessions, "sem resposta do modelo, ignorada", "sem resposta do modelo, ignoradas")})` : "";
+  out.push(`${plural(report.sessions.length, "sess\xE3o", "sess\xF5es")} de ${report.project}${ignored}`);
+  out.push(...report.transcriptDirs.map((dir) => `  hist\xF3ricos: ${dir}`));
+  if (!report.sessions.length) return out.join("\n");
+  const header = ["data", "sess\xE3o", "dura\xE7\xE3o", "abertura", "at\xE9 editar", "tool calls", "compacta\xE7\xF5es"];
+  const right = [false, false, true, true, true, true, true];
+  const rows = report.sessions.map((s) => [
+    s.date,
+    s.id.slice(0, 8),
+    formatDuration(s.durationMs),
+    formatNumber(s.openingTokens),
+    s.toolCallsBeforeEdit === null ? "-" : formatNumber(s.toolCallsBeforeEdit),
+    formatNumber(s.toolCalls),
+    `${s.compactionsEstimated ? "~" : ""}${s.compactions}`
+  ]);
+  const widths = header.map((h, i) => Math.max(h.length, ...rows.map((r) => r[i].length)));
+  const line = (cells) => cells.map((c, i) => right[i] ? c.padStart(widths[i]) : c.padEnd(widths[i])).join("  ").trimEnd();
+  out.push("", line(header));
+  const splitIndex = report.splitAt ? report.sessions.findIndex((s) => s.date >= report.splitAt) : -1;
+  rows.forEach((row, i) => {
+    if (i === splitIndex) out.push(`-- a partir de ${report.splitAt} --`);
+    out.push(line(row));
+  });
+  out.push("", ...formatSummary(report.groups));
+  out.push("", "tokens e tool calls: mediana por sess\xE3o \xB7 compacta\xE7\xF5es: m\xE9dia por sess\xE3o \xB7 ~ estimado pela queda de contexto");
+  if (report.repeatedErrors?.entries.length) {
+    out.push(`erros que voltaram: ${report.repeatedErrors.entries.map((e) => `${e.slug} (${e.occurrences}x)`).join(", ")}`);
+  }
+  return out.join("\n");
+}
+function formatSummary(groups) {
+  const dash = (v, decimals = 0) => v === null ? "-" : formatNumber(v, decimals);
+  const table = [
+    ["", ...groups.map((g) => `${g.label} (${g.sessions} ${g.sessions === 1 ? "sess\xE3o" : "sess\xF5es"})`)],
+    ["tokens na abertura", ...groups.map((g) => dash(g.openingTokens === null ? null : Math.round(g.openingTokens)))],
+    ["tool calls at\xE9 editar", ...groups.map((g) => dash(g.toolCallsBeforeEdit, Number.isInteger(g.toolCallsBeforeEdit ?? 0) ? 0 : 1))],
+    ["compacta\xE7\xF5es/sess\xE3o", ...groups.map((g) => `${dash(g.compactionsPerSession, 1)}${g.compactionsEstimated && g.sessions ? " (estimado)" : ""}`)],
+    ["erros repetidos", ...groups.map((g) => dash(g.repeatedErrors))]
+  ];
+  const widths = table[0].map((_, i) => Math.max(...table.map((r) => r[i].length)));
+  return table.map((row) => row.map((c, i) => c.padEnd(widths[i] + (i < row.length - 1 ? 3 : 0))).join("").trimEnd());
+}
+
 // src/cli.ts
 var USAGE = `uso: betterdev <comando> [op\xE7\xF5es]
 
@@ -9080,6 +9427,9 @@ comandos:
         [--force]             ativa mesmo com depend\xEAncias pendentes
   stop                        limpa a fase ativa
   brief [plano/fase]          imprime s\xF3 a fase ativa (ou a indicada), com Contexto e Fora do escopo
+  stats [--project <caminho>] [--split-at <AAAA-MM-DD>] [--json]
+                              m\xE9tricas por sess\xE3o dos hist\xF3ricos do Claude Code e medianas antes e depois da data
+  migrate split <arquivos...> divide MEMORY.md, ERRORS.md etc. pelos t\xEDtulos em candidatos em .dev/.local/migration/
   hooks install|uninstall     instala ou remove o git hook prepare-commit-msg
   commit-msg <arquivo> [origem]
                               usado pelo git hook: preenche a mensagem e o trailer da fase ativa
@@ -9094,23 +9444,23 @@ var commands = {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     const cwd = process.cwd();
     const root = findProjectRoot(cwd);
-    const mdFiles = (dir) => readdirSync4(dir).filter((f) => f.endsWith(".md")).sort().map((f) => join14(dir, f));
+    const mdFiles = (dir) => readdirSync6(dir).filter((f) => f.endsWith(".md")).sort().map((f) => join17(dir, f));
     const plans = [];
     const entries = [];
     const claudeMds = [];
     let missing = 0;
-    if (!positionals.length && existsSync14(join14(root, PLANS_DIR))) plans.push(...mdFiles(join14(root, PLANS_DIR)));
+    if (!positionals.length && existsSync16(join17(root, PLANS_DIR))) plans.push(...mdFiles(join17(root, PLANS_DIR)));
     for (const target of positionals) {
-      const abs = resolve6(cwd, target);
-      if (!existsSync14(abs)) {
+      const abs = resolve8(cwd, target);
+      if (!existsSync16(abs)) {
         console.error(`betterdev lint: caminho n\xE3o encontrado: ${target}`);
         missing++;
         continue;
       }
-      for (const file of statSync6(abs).isDirectory() ? mdFiles(abs) : [abs]) {
+      for (const file of statSync7(abs).isDirectory() ? mdFiles(abs) : [abs]) {
         if (isEntryPath(file)) entries.push(file);
         else if (trackOfPath(file)) continue;
-        else if (basename4(file) === "CLAUDE.md") claudeMds.push(file);
+        else if (basename5(file) === "CLAUDE.md") claudeMds.push(file);
         else plans.push(file);
       }
     }
@@ -9118,7 +9468,7 @@ var commands = {
       ...plans.map((file) => ({ file, problems: lintPlanFile(file) })),
       ...positionals.length ? entries.length ? lintMemory(root, entries) : [] : lintMemory(root),
       ...claudeMds.map((file) => ({ file, problems: lintClaudeMd(file) }))
-    ].map((r) => ({ ...r, file: relative4(cwd, r.file).split(sep4).join("/") }));
+    ].map((r) => ({ ...r, file: relative5(cwd, r.file).split(sep5).join("/") }));
     if (!reports.length) {
       if (!missing) console.log("nada a validar: nenhum plano nem entrada de mem\xF3ria encontrado");
       return missing ? 1 : 0;
@@ -9130,7 +9480,7 @@ var commands = {
   init(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
     if (positionals.length > 1) throw new UsageError("init aceita no m\xE1ximo uma pasta");
-    const root = resolve6(positionals[0] ?? ".");
+    const root = resolve8(positionals[0] ?? ".");
     const actions = init(root);
     console.log(actions.length ? actions.join("\n") : "nada a fazer: a estrutura .dev/ j\xE1 existe");
     return 0;
@@ -9200,7 +9550,7 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     for (const r of results) {
       const count = `${r.entries} ${r.entries === 1 ? "entrada" : "entradas"}`;
       console.log(`${(r.changed ? "atualizado" : "sem mudan\xE7a").padEnd(12)}${r.path} (${count})`);
-      for (const s of r.skipped) console.error(`aviso: ${s.message} em ${relative4(process.cwd(), s.path).split(sep4).join("/")}:${s.line}; a entrada ficou fora do \xEDndice`);
+      for (const s of r.skipped) console.error(`aviso: ${s.message} em ${relative5(process.cwd(), s.path).split(sep5).join("/")}:${s.line}; a entrada ficou fora do \xEDndice`);
       if (r.overBudget) {
         console.error(`erro: ${r.path} tem ${r.lines} linhas (m\xE1ximo ${INDEX_MAX_LINES}): funda ou remova entradas`);
         failed = true;
@@ -9223,6 +9573,37 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     const root = findProjectRoot();
     const hits = recall(root, terms);
     console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(" ")}`);
+    return 0;
+  },
+  stats(args) {
+    const { values } = parseArgs({
+      args,
+      allowPositionals: false,
+      options: { project: { type: "string" }, "split-at": { type: "string" }, json: { type: "boolean" } }
+    });
+    const splitAt = values["split-at"];
+    if (splitAt !== void 0 && !isIsoDate(splitAt)) throw new UsageError(`--split-at deve ser uma data AAAA-MM-DD, n\xE3o "${splitAt}"`);
+    const root = values.project ? resolve8(values.project) : findProjectRoot();
+    if (!existsSync16(root) || !statSync7(root).isDirectory()) throw new ProjectError(`pasta do projeto n\xE3o encontrada: ${values.project}`);
+    const report = buildReport(root, { splitAt });
+    if (!report.transcriptDirs.length) {
+      throw new ProjectError(`nenhum hist\xF3rico do Claude Code para ${root} em ${defaultProjectsDir()}`);
+    }
+    console.log(values.json ? JSON.stringify(report, null, 2) : formatReport2(report));
+    return 0;
+  },
+  migrate(args) {
+    const [sub, ...rest] = args;
+    if (sub !== "split") throw new UsageError("uso: betterdev migrate split <arquivos...>");
+    const { positionals } = parseArgs({ args: rest, allowPositionals: true, options: {} });
+    if (!positionals.length) throw new UsageError("uso: betterdev migrate split <arquivos...>");
+    const cwd = process.cwd();
+    const root = findProjectRoot(cwd);
+    if (!existsSync16(join17(root, ".dev"))) throw new ProjectError("nenhuma pasta .dev/ encontrada: rode betterdev init antes");
+    const files = positionals.map((p) => resolve8(cwd, p));
+    const missing = positionals.filter((_, i) => !existsSync16(files[i]) || !statSync7(files[i]).isFile());
+    if (missing.length) throw new ProjectError(`arquivo n\xE3o encontrado: ${missing.join(", ")}`);
+    console.log(formatSplit(splitFiles(root, files)));
     return 0;
   },
   hooks(args) {
@@ -9295,13 +9676,13 @@ var HOOKS = {
 function readStdin() {
   if (process.stdin.isTTY) return "";
   try {
-    return readFileSync14(0, "utf8");
+    return readFileSync16(0, "utf8");
   } catch {
     return "";
   }
 }
 function onPath(name) {
-  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync14(join14(dir, name)) || existsSync14(join14(dir, `${name}.exe`)));
+  return (process.env.PATH ?? "").split(delimiter).filter(Boolean).some((dir) => existsSync16(join17(dir, name)) || existsSync16(join17(dir, `${name}.exe`)));
 }
 var UsageError = class extends Error {
 };

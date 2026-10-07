@@ -15,11 +15,14 @@ import { newEntry } from './memory/entry';
 import { isEntryPath, lintClaudeMd, lintMemory, trackOfPath } from './memory/lint';
 import { formatRecall, parseTerms, recall } from './memory/recall';
 import { INDEX_MAX_LINES, reindex } from './memory/reindex';
+import { formatSplit, splitFiles } from './migrate/split';
 import { brief } from './plan/brief';
 import { PLANS_DIR, ProjectError, findPlan, findProjectRoot, listPlans, parsePhaseRef } from './plan/find';
 import { formatReport, lintPlanFile, type FileReport } from './plan/lint';
 import { formatPlanStatus, planStatus } from './plan/status';
 import { clearState, readState, startPhase } from './state';
+import { buildReport, formatReport as formatStats, isIsoDate } from './stats/report';
+import { defaultProjectsDir } from './stats/transcripts';
 
 const USAGE = `uso: betterdev <comando> [opções]
 
@@ -37,6 +40,9 @@ comandos:
         [--force]             ativa mesmo com dependências pendentes
   stop                        limpa a fase ativa
   brief [plano/fase]          imprime só a fase ativa (ou a indicada), com Contexto e Fora do escopo
+  stats [--project <caminho>] [--split-at <AAAA-MM-DD>] [--json]
+                              métricas por sessão dos históricos do Claude Code e medianas antes e depois da data
+  migrate split <arquivos...> divide MEMORY.md, ERRORS.md etc. pelos títulos em candidatos em .dev/.local/migration/
   hooks install|uninstall     instala ou remove o git hook prepare-commit-msg
   commit-msg <arquivo> [origem]
                               usado pelo git hook: preenche a mensagem e o trailer da fase ativa
@@ -194,6 +200,39 @@ const commands: Record<string, Command> = {
     const root = findProjectRoot();
     const hits = recall(root, terms);
     console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(' ')}`);
+    return 0;
+  },
+
+  stats(args) {
+    const { values } = parseArgs({
+      args,
+      allowPositionals: false,
+      options: { project: { type: 'string' }, 'split-at': { type: 'string' }, json: { type: 'boolean' } },
+    });
+    const splitAt = values['split-at'];
+    if (splitAt !== undefined && !isIsoDate(splitAt)) throw new UsageError(`--split-at deve ser uma data AAAA-MM-DD, não "${splitAt}"`);
+    const root = values.project ? resolve(values.project) : findProjectRoot();
+    if (!existsSync(root) || !statSync(root).isDirectory()) throw new ProjectError(`pasta do projeto não encontrada: ${values.project}`);
+    const report = buildReport(root, { splitAt });
+    if (!report.transcriptDirs.length) {
+      throw new ProjectError(`nenhum histórico do Claude Code para ${root} em ${defaultProjectsDir()}`);
+    }
+    console.log(values.json ? JSON.stringify(report, null, 2) : formatStats(report));
+    return 0;
+  },
+
+  migrate(args) {
+    const [sub, ...rest] = args;
+    if (sub !== 'split') throw new UsageError('uso: betterdev migrate split <arquivos...>');
+    const { positionals } = parseArgs({ args: rest, allowPositionals: true, options: {} });
+    if (!positionals.length) throw new UsageError('uso: betterdev migrate split <arquivos...>');
+    const cwd = process.cwd();
+    const root = findProjectRoot(cwd);
+    if (!existsSync(join(root, '.dev'))) throw new ProjectError('nenhuma pasta .dev/ encontrada: rode betterdev init antes');
+    const files = positionals.map((p) => resolve(cwd, p));
+    const missing = positionals.filter((_, i) => !existsSync(files[i]!) || !statSync(files[i]!).isFile());
+    if (missing.length) throw new ProjectError(`arquivo não encontrado: ${missing.join(', ')}`);
+    console.log(formatSplit(splitFiles(root, files)));
     return 0;
   },
 
