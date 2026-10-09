@@ -81,7 +81,7 @@ export function stopHook(root: string, input: HookInput, { now = new Date(), bud
   appendMetric(root, { evento: 'verify', fase: ref, resultado: 'falhou', comando: command, duracao_ms: run.durationMs, log }, now);
   const { lines, hidden } = failureLines(output);
   const context = [
-    `[betterdev] verificação da fase ${phaseId} falhou${timedOut ? ` (tempo esgotado após ${Math.round(budgetMs / 1000)} s)` : ''}: ${command}`,
+    `[builderdev] verificação da fase ${phaseId} falhou${timedOut ? ` (tempo esgotado após ${Math.round(budgetMs / 1000)} s)` : ''}: ${command}`,
     ...lines.map((l) => `  ${l}`),
     ...(hidden ? [`(+${hidden} linhas de falha no log)`] : []),
     `Log completo: ${log}`,
@@ -101,7 +101,7 @@ function runVerify(root: string, log: string, commands: string[], budgetMs: numb
   const fd = openSync(file, 'a');
   const started = Date.now();
   try {
-    writeSync(fd, `# betterdev verify · ${new Date(started).toISOString()}\n`);
+    writeSync(fd, `# builderdev verify · ${new Date(started).toISOString()}\n`);
     for (const command of commands) {
       writeSync(fd, `\n$ ${command}\n`);
       const offset = statSync(file).size;

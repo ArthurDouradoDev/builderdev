@@ -19,7 +19,7 @@ let project: string;
 let projectsDir: string;
 
 beforeEach(() => {
-  tmp = mkdtempSync(join(tmpdir(), 'betterdev-stats-'));
+  tmp = mkdtempSync(join(tmpdir(), 'builderdev-stats-'));
   project = join(tmp, 'Meu Projeto');
   projectsDir = join(tmp, 'claude', 'projects');
   mkdirSync(project);

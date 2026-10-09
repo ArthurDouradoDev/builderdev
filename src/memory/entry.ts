@@ -14,7 +14,7 @@ export function newEntry(root: string, track: string, slug: string, today = loca
   if (!(TRACKS as readonly string[]).includes(track)) throw new ProjectError(`trilha "${track}" inválida: use --track ${TRACKS.join(' | ')}`);
   const [slugProblem] = slugProblems(slug);
   if (slugProblem) throw new ProjectError(slugProblem);
-  if (!existsSync(join(root, '.dev'))) throw new ProjectError('pasta .dev/ não encontrada: rode betterdev init antes');
+  if (!existsSync(join(root, '.dev'))) throw new ProjectError('pasta .dev/ não encontrada: rode builderdev init antes');
 
   for (const t of TRACKS) {
     const existing = `${TRACK_DIRS[t]}/${slug}.md`;

@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: Fim de sessão. Decide se algo desta sessão merece virar entrada em .dev/memory ou .dev/errors pelo critério de durabilidade e registra no máximo uma entrada, validada por betterdev lint. "Nada a registrar" é um resultado válido.
+description: Fim de sessão. Decide se algo desta sessão merece virar entrada em .dev/memory ou .dev/errors pelo critério de durabilidade e registra no máximo uma entrada, validada por builderdev lint. "Nada a registrar" é um resultado válido.
 disable-model-invocation: true
 argument-hint: "[aprendizado a considerar]"
 ---
@@ -32,7 +32,7 @@ Se nada passa, responda "nada a registrar" com o motivo em uma linha e termine a
 Rode a busca com 2 a 5 termos do aprendizado (module, componente, mensagem de erro):
 
 ```bash
-betterdev recall <termos...>
+builderdev recall <termos...>
 ```
 
 Abra com Read a entrada que tratar do mesmo assunto. Se for **o mesmo erro**, atualize essa entrada em vez de criar outra: incremente `occurrences`, ponha a data de hoje em `updated` e acrescente o que mudou (novo sintoma, causa mais precisa). Se for o mesmo conhecimento, corrija ou complete a entrada existente. Em ambos os casos, pule para o passo 4.
@@ -45,7 +45,7 @@ Registre no máximo uma entrada por sessão: a de maior valor pelo critério do 
 - `conhecimento`: convenção, decisão ou padrão. Tipos: `convencao | decisao | padrao | ferramenta | fluxo | pratica`.
 
 ```bash
-betterdev entry new --track <bug|conhecimento> --slug <assunto-em-minusculas-com-hifen>
+builderdev entry new --track <bug|conhecimento> --slug <assunto-em-minusculas-com-hifen>
 ```
 
 O slug descreve o assunto, sem data. Preencha o arquivo criado:
@@ -58,8 +58,8 @@ O slug descreve o assunto, sem data. Preencha o arquivo criado:
 ## 4. Valide e regenere os índices
 
 ```bash
-betterdev lint
-betterdev reindex
+builderdev lint
+builderdev reindex
 ```
 
 Corrija o que o `lint` apontar na entrada e rode de novo até sair sem erro. Avisos de `corpus-module` ou `corpus-tag` sugerem um valor já usado: troque por ele.

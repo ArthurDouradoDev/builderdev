@@ -4,11 +4,11 @@
 
 ## O que é
 
-Metodologia de desenvolvimento em forma de skills que disparam sozinhas: brainstorming → worktree → plano → execução (um subagente por tarefa, ou tudo na sessão) → TDD → revisão → finalização. Um hook de início de sessão injeta a skill de introdução. Suporta 16 hosts. O repositório inclui specs de experimentos de custo com números medidos, que são a parte mais valiosa para o BetterDev.
+Metodologia de desenvolvimento em forma de skills que disparam sozinhas: brainstorming → worktree → plano → execução (um subagente por tarefa, ou tudo na sessão) → TDD → revisão → finalização. Um hook de início de sessão injeta a skill de introdução. Suporta 16 hosts. O repositório inclui specs de experimentos de custo com números medidos, que são a parte mais valiosa para o BuilderDev.
 
 ## Trazer
 
-| Ideia | Como funciona | Destino no BetterDev |
+| Ideia | Como funciona | Destino no BuilderDev |
 |---|---|---|
 | **Hook de início de sessão** | Script injeta contexto direto na sessão (sem arquivo para o modelo ler). O matcher é `startup\|clear\|compact`, então o contexto volta depois de uma compactação. O script detecta o host por variáveis de ambiente e emite o JSON no formato de cada um (Claude Code, Cursor, Copilot usam campos diferentes). | §5 item 2, §4.2 |
 | **Extração da tarefa ativa** | Script de ~20 linhas (awk) recorta do plano só o bloco de uma tarefa, pelo título, ignorando títulos dentro de blocos de código, e grava num arquivo que o executor lê numa chamada. | §3.4 consumidor 1 |

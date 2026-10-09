@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const DEV_DIRS = ['.dev', '.dev/plans', '.dev/memory', '.dev/errors', '.dev/templates', '.dev/.local'];
-/** Estado local e índices gerados pelo `betterdev reindex`: nunca vão para o git. */
+/** Estado local e índices gerados pelo `builderdev reindex`: nunca vão para o git. */
 const IGNORED = ['.dev/.local/', '.dev/memory/index.md', '.dev/errors/index.md'];
 
 /** Pasta `templates/` do plugin. Vale tanto para `src/init.ts` quanto para o `dist/cli.js` gerado. */

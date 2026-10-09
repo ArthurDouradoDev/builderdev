@@ -8,7 +8,7 @@ Coleção de 13 skills de frontend "anti-slop": uma principal (v2, 88 KB), varia
 
 ## Trazer
 
-| Ideia | Como funciona | Destino no BetterDev |
+| Ideia | Como funciona | Destino no BuilderDev |
 |---|---|---|
 | **Formato de `DESIGN.md` para o Stitch** | Documento em linguagem descritiva que o Stitch interpreta, com valores exatos entre parênteses. Seções: (1) atmosfera visual, (2) paleta com **nome descritivo + hex + papel** de cada cor, (3) regras de tipografia, (4) componentes com estados, (5) layout, (6) movimento pretendido (o Stitch gera telas estáticas; esta seção orienta quem implementa), (7) padrões proibidos. | `/stitch` |
 | **Três dials** | Variância de layout, intensidade de movimento e densidade visual, de 1 a 10, inferidos do brief e declarados. Na skill do Stitch há um quarto: criatividade. | Registrados no `DESIGN.md` |
@@ -21,7 +21,7 @@ Coleção de 13 skills de frontend "anti-slop": uma principal (v2, 88 KB), varia
 
 ## Não trazer
 
-- **O SKILL.md principal (88 KB, ~22k tokens).** É exatamente o problema que o BetterDev combate.
+- **O SKILL.md principal (88 KB, ~22k tokens).** É exatamente o problema que o BuilderDev combate.
 - **As proibições que contradizem o Refero.** O taste proíbe Inter como padrão; o Refero o recomenda como preset seguro. O taste desaconselha Lucide; o Refero o recomenda para SaaS. O `stitch-skill` pede micro-animação em loop em todo componente ativo; o Refero e a própria v2 do taste tratam loops infinitos como distração. Gosto é opinião: vale uma autoridade só, e a escolhida é o método do Refero.
 - **Listas de proibição que crescem a cada rodada de teste.** A v2 acumula dezenas de "banned" específicos (eyebrows numerados, faixas de cidade e clima, créditos de foto decorativos…). Cada item é razoável, mas a lista sem uma regra que decida quais entram não converge. O compound chama isso de *case accretion*.
 - **A pasta `research/`.** Apresenta como fatos afirmações sem fonte verificável ("gorjeta de US$200 dá +45%", "o modelo fica preguiçoso em dezembro", taxas de acionamento de skills de 68% e 90%). Não citar.

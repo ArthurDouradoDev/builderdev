@@ -10,7 +10,7 @@ let cli: BuiltCli;
 let root: string;
 
 beforeAll(() => {
-  cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+  cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
   cli = buildCli(cliDir);
 });
 
@@ -19,7 +19,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-compact-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-compact-'));
 });
 
 afterEach(() => {
@@ -51,7 +51,7 @@ describe('hook PostCompact', { timeout: 30_000 }, () => {
     expect(JSON.parse(readFileSync(join(root, '.dev/.local/metrics.jsonl'), 'utf8'))).toMatchObject({ trigger: 'auto', session_id: 'com-bom' });
   });
 
-  it('fora de projeto BetterDev, não grava nada', () => {
+  it('fora de projeto BuilderDev, não grava nada', () => {
     expect(runHook(cli, root, 'post-compact', { cwd: root, trigger: 'auto' })).toEqual({ status: 0, stdout: '', stderr: '' });
     expect(existsSync(join(root, '.dev'))).toBe(false);
   });

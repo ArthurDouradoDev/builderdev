@@ -10,7 +10,7 @@ const FIXTURE = fileURLToPath(new URL('../fixtures/memory/projeto', import.meta.
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-reindex-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-reindex-'));
   cpSync(FIXTURE, root, { recursive: true });
 });
 

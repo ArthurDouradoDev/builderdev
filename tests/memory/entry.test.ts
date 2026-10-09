@@ -8,7 +8,7 @@ import { parseEntry } from '../../src/memory/schema';
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-entry-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-entry-'));
   mkdirSync(join(root, '.dev/memory'), { recursive: true });
 });
 
@@ -50,7 +50,7 @@ describe('entry new', () => {
     expect(() => newEntry(root, 'bug', 'Erro_Grave')).toThrow('não é um slug');
     expect(() => newEntry(root, 'bug', '2026-10-06-erro')).toThrow('tem data no nome');
     rmSync(join(root, '.dev'), { recursive: true });
-    expect(() => newEntry(root, 'bug', 'erro')).toThrow('rode betterdev init');
+    expect(() => newEntry(root, 'bug', 'erro')).toThrow('rode builderdev init');
   });
 
   it('usa a data local no formato AAAA-MM-DD', () => {

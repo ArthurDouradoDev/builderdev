@@ -12,7 +12,7 @@ let root: string;
 let hook: string;
 
 beforeEach(() => {
-  root = makeRepo('betterdev-hooks-');
+  root = makeRepo('builderdev-hooks-');
   hook = join(root, '.git/hooks/prepare-commit-msg');
 });
 
@@ -72,7 +72,7 @@ describe('hooks install', { timeout: 30_000 }, () => {
   });
 
   it('fora de um repositório git, falha com mensagem clara', () => {
-    const outside = mkdtempSync(join(tmpdir(), 'betterdev-nogit-'));
+    const outside = mkdtempSync(join(tmpdir(), 'builderdev-nogit-'));
     try {
       expect(() => installHook(outside)).toThrow(/^git rev-parse: not a git repository/);
     } finally {
@@ -82,7 +82,7 @@ describe('hooks install', { timeout: 30_000 }, () => {
 });
 
 describe('hooks uninstall', { timeout: 30_000 }, () => {
-  it('hook criado pelo betterdev: apaga o arquivo', () => {
+  it('hook criado pelo builderdev: apaga o arquivo', () => {
     installHook(root);
 
     expect(uninstallHook(root).action).toBe('removido');
@@ -127,12 +127,12 @@ describe('o hook instalado nunca bloqueia um commit', { timeout: 60_000 }, () =>
   let failing: BuiltCli;
 
   beforeAll(() => {
-    cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+    cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
     cli = buildCli(cliDir);
-    // Um betterdev que sempre falha, para provar que a falha dele não chega ao git.
+    // Um builderdev que sempre falha, para provar que a falha dele não chega ao git.
     failing = { script: cli.script, binDir: join(cliDir, 'failing') };
     mkdirSync(failing.binDir);
-    writeFileSync(join(failing.binDir, 'betterdev'), '#!/bin/sh\necho "betterdev quebrado" >&2\nexit 7\n', { mode: 0o755 });
+    writeFileSync(join(failing.binDir, 'builderdev'), '#!/bin/sh\necho "builderdev quebrado" >&2\nexit 7\n', { mode: 0o755 });
   });
 
   afterAll(() => {
@@ -141,13 +141,13 @@ describe('o hook instalado nunca bloqueia um commit', { timeout: 60_000 }, () =>
 
   const commitCount = () => Number(git(root, 'rev-list', '--count', '--all').trim() || 0);
 
-  it('sem betterdev no PATH, com betterdev falhando e com betterdev funcionando', () => {
+  it('sem builderdev no PATH, com builderdev falhando e com builderdev funcionando', () => {
     installHook(root);
 
     expect(gitWithCli(null, root, 'commit', '-q', '--allow-empty', '-m', 'sem cli').status).toBe(0);
     const broken = gitWithCli(failing, root, 'commit', '-q', '--allow-empty', '-m', 'cli quebrado');
     expect(broken.status).toBe(0);
-    expect(broken.stderr).toContain('betterdev quebrado');
+    expect(broken.stderr).toContain('builderdev quebrado');
     expect(gitWithCli(cli, root, 'commit', '-q', '--allow-empty', '-m', 'cli ok').status).toBe(0);
     expect(commitCount()).toBe(3);
   });

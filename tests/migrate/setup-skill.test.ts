@@ -34,9 +34,9 @@ describe('skills/setup/SKILL.md', () => {
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 
-  it('passo 1: registra a linha de base com betterdev stats antes de qualquer mudança', () => {
-    expect(step(1)).toContain('betterdev stats');
-    expect(text.indexOf('betterdev stats')).toBeLessThan(text.indexOf('betterdev init'));
+  it('passo 1: registra a linha de base com builderdev stats antes de qualquer mudança', () => {
+    expect(step(1)).toContain('builderdev stats');
+    expect(text.indexOf('builderdev stats')).toBeLessThan(text.indexOf('builderdev init'));
   });
 
   it('passo 6: pede confirmação antes de trocar o CLAUDE.md da raiz pelo atalho', () => {
@@ -48,7 +48,7 @@ describe('skills/setup/SKILL.md', () => {
   });
 
   it('usa os comandos do script para a parte mecânica', () => {
-    for (const command of ['betterdev init', 'betterdev migrate split', 'betterdev entry new', 'betterdev lint', 'betterdev reindex', 'betterdev hooks install']) {
+    for (const command of ['builderdev init', 'builderdev migrate split', 'builderdev entry new', 'builderdev lint', 'builderdev reindex', 'builderdev hooks install']) {
       expect(text).toContain(command);
     }
     expect(text).toContain('alguém lendo o código final repetiria o erro ou refaria uma investigação grande?');

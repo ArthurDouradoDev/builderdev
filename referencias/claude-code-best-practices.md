@@ -4,11 +4,11 @@
 
 ## O que é
 
-O guia da Anthropic sobre como trabalhar com o Claude Code. A premissa que abre o documento é a tese do BetterDev: a janela de contexto enche rápido e o desempenho cai à medida que ela enche; é o recurso mais importante a gerenciar.
+O guia da Anthropic sobre como trabalhar com o Claude Code. A premissa que abre o documento é a tese do BuilderDev: a janela de contexto enche rápido e o desempenho cai à medida que ela enche; é o recurso mais importante a gerenciar.
 
 ## Trazer
 
-| Ideia | O que o guia diz | Destino no BetterDev |
+| Ideia | O que o guia diz | Destino no BuilderDev |
 |---|---|---|
 | **CLAUDE.md curto** | Para cada linha, pergunte: remover isto faria o Claude errar? Se não, corte. Um CLAUDE.md inchado faz o Claude ignorar as instruções que importam. Se ele ignora uma regra apesar dela existir, o arquivo provavelmente está longo demais. | §4.1, orçamento da §5 item 7 |
 | **O que incluir / excluir** | Incluir: comandos que o Claude não adivinha, estilo que difere do padrão, como testar, etiqueta do repo, decisões de arquitetura, peculiaridades do ambiente, pegadinhas. Excluir: o que se descobre lendo o código, convenções padrão da linguagem, documentação de API, o que muda com frequência, tutoriais, descrição arquivo por arquivo, óbvios como "escreva código limpo". | Template do `CLAUDE.md` gerado pelo `/setup` |

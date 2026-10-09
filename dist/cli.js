@@ -7373,7 +7373,7 @@ import { parseArgs } from "node:util";
 
 // package.json
 var package_default = {
-  name: "betterdev",
+  name: "builderdev",
   version: "0.1.0",
   description: "Planos por fases com status derivado do git, mem\xF3ria com \xEDndice gerado e hooks para o Claude Code.",
   private: true,
@@ -7382,7 +7382,7 @@ var package_default = {
     node: ">=20"
   },
   bin: {
-    betterdev: "dist/cli.js"
+    builderdev: "dist/cli.js"
   },
   scripts: {
     typecheck: "tsc --noEmit",
@@ -7805,16 +7805,16 @@ function commentPrefix(cwd) {
 import { chmodSync, copyFileSync, existsSync as existsSync4, mkdirSync as mkdirSync2, readFileSync as readFileSync4, rmSync as rmSync2, writeFileSync as writeFileSync3 } from "node:fs";
 import { join as join4, relative as relative2, resolve as resolve3, sep as sep2 } from "node:path";
 var HOOK_NAME = "prepare-commit-msg";
-var BEGIN = "# betterdev:inicio";
-var END = "# betterdev:fim";
+var BEGIN = "# builderdev:inicio";
+var END = "# builderdev:fim";
 var SHEBANG = "#!/bin/sh";
 var HOOK_BLOCK = [
-  `${BEGIN} \xB7 gerado por "betterdev hooks install"; remova com "betterdev hooks uninstall"`,
-  "betterdev_status=$?",
-  "if command -v betterdev >/dev/null 2>&1; then",
-  '  betterdev commit-msg "$1" "$2" || true',
+  `${BEGIN} \xB7 gerado por "builderdev hooks install"; remova com "builderdev hooks uninstall"`,
+  "builderdev_status=$?",
+  "if command -v builderdev >/dev/null 2>&1; then",
+  '  builderdev commit-msg "$1" "$2" || true',
   "fi",
-  '(exit "$betterdev_status")',
+  '(exit "$builderdev_status")',
   END
 ].join("\n");
 function hooksDir(cwd) {
@@ -8124,7 +8124,7 @@ function isDate(value) {
 }
 
 // src/memory/reindex.ts
-var INDEX_HEADER = "<!-- GERADO por betterdev reindex; n\xE3o editar -->";
+var INDEX_HEADER = "<!-- GERADO por builderdev reindex; n\xE3o editar -->";
 var INDEX_MAX_LINES = 200;
 var INDEX_TITLES = { conhecimento: "Mem\xF3ria", bug: "Erros" };
 function indexLine(entry) {
@@ -8220,7 +8220,7 @@ function buildContext(root) {
   }
   const text = render();
   if (text.length <= CONTEXT_MAX) return text;
-  const marker = "\n[cortado: betterdev brief]";
+  const marker = "\n[cortado: builderdev brief]";
   return text.slice(0, CONTEXT_MAX - marker.length) + marker;
 }
 function renderBlock(block) {
@@ -8229,9 +8229,9 @@ function renderBlock(block) {
 }
 function phaseLines(root) {
   const branch = currentBranch(root);
-  const prefix = `[betterdev] ${branch ? `branch ${branch} \xB7 ` : ""}`;
+  const prefix = `[builderdev] ${branch ? `branch ${branch} \xB7 ` : ""}`;
   const state = readState(root);
-  if (!state) return [`${prefix}nenhuma fase ativa (planos: betterdev status)`];
+  if (!state) return [`${prefix}nenhuma fase ativa (planos: builderdev status)`];
   const ref = `${state.plan}/${state.phase}`;
   try {
     const entry = findPlan(root, state.plan);
@@ -8243,10 +8243,10 @@ function phaseLines(root) {
     if (files.length) lines.push(`Arquivos: ${files.join(", ")}`);
     const verify = textList(phase.yaml.data.verify);
     if (verify.length) lines.push(`Verifica\xE7\xE3o: ${verify.join(" \xB7 ")}`);
-    lines.push("Detalhes da fase: betterdev brief");
+    lines.push("Detalhes da fase: builderdev brief");
     return lines;
   } catch (err) {
-    return [`${prefix}fase ativa ${ref} n\xE3o p\xF4de ser lida: ${err.message} (betterdev stop limpa)`];
+    return [`${prefix}fase ativa ${ref} n\xE3o p\xF4de ser lida: ${err.message} (builderdev stop limpa)`];
   }
 }
 function phaseObjective(plan, phaseId) {
@@ -8273,7 +8273,7 @@ function indexBlock(root, track) {
   if (!existsSync8(file)) return null;
   const lines = readFileSync7(file, "utf8").split(/\r?\n/).filter((l) => l.startsWith("- "));
   const count = `${lines.length} ${lines.length === 1 ? "entrada" : "entradas"}`;
-  return { title: `${INDEX_LABELS[track]} (${count}, ${path}):`, lines, shown: lines.length, source: "betterdev reindex" };
+  return { title: `${INDEX_LABELS[track]} (${count}, ${path}):`, lines, shown: lines.length, source: "builderdev reindex" };
 }
 function gitLines(root, args) {
   try {
@@ -8356,7 +8356,7 @@ function stopHook(root, input, { now = /* @__PURE__ */ new Date(), budgetMs = VE
   appendMetric(root, { evento: "verify", fase: ref, resultado: "falhou", comando: command, duracao_ms: run.durationMs, log }, now);
   const { lines, hidden } = failureLines(output);
   const context = [
-    `[betterdev] verifica\xE7\xE3o da fase ${phaseId} falhou${timedOut ? ` (tempo esgotado ap\xF3s ${Math.round(budgetMs / 1e3)} s)` : ""}: ${command}`,
+    `[builderdev] verifica\xE7\xE3o da fase ${phaseId} falhou${timedOut ? ` (tempo esgotado ap\xF3s ${Math.round(budgetMs / 1e3)} s)` : ""}: ${command}`,
     ...lines.map((l) => `  ${l}`),
     ...hidden ? [`(+${hidden} linhas de falha no log)`] : [],
     `Log completo: ${log}`
@@ -8369,7 +8369,7 @@ function runVerify(root, log, commands2, budgetMs) {
   const fd = openSync(file, "a");
   const started = Date.now();
   try {
-    writeSync(fd, `# betterdev verify \xB7 ${new Date(started).toISOString()}
+    writeSync(fd, `# builderdev verify \xB7 ${new Date(started).toISOString()}
 `);
     for (const command of commands2) {
       writeSync(fd, `
@@ -8530,7 +8530,7 @@ function newEntry(root, track, slug, today = localDate()) {
   if (!TRACKS.includes(track)) throw new ProjectError(`trilha "${track}" inv\xE1lida: use --track ${TRACKS.join(" | ")}`);
   const [slugProblem] = slugProblems(slug);
   if (slugProblem) throw new ProjectError(slugProblem);
-  if (!existsSync12(join12(root, ".dev"))) throw new ProjectError("pasta .dev/ n\xE3o encontrada: rode betterdev init antes");
+  if (!existsSync12(join12(root, ".dev"))) throw new ProjectError("pasta .dev/ n\xE3o encontrada: rode builderdev init antes");
   for (const t of TRACKS) {
     const existing = `${TRACK_DIRS[t]}/${slug}.md`;
     if (existsSync12(join12(root, existing))) {
@@ -9411,7 +9411,7 @@ function formatSummary(groups) {
 }
 
 // src/cli.ts
-var USAGE = `uso: betterdev <comando> [op\xE7\xF5es]
+var USAGE = `uso: builderdev <comando> [op\xE7\xF5es]
 
 comandos:
   lint [caminhos...]          valida planos, entradas de memory/ e errors/ e o .dev/CLAUDE.md
@@ -9453,7 +9453,7 @@ var commands = {
     for (const target of positionals) {
       const abs = resolve8(cwd, target);
       if (!existsSync16(abs)) {
-        console.error(`betterdev lint: caminho n\xE3o encontrado: ${target}`);
+        console.error(`builderdev lint: caminho n\xE3o encontrado: ${target}`);
         missing++;
         continue;
       }
@@ -9509,16 +9509,16 @@ var commands = {
         const activePlan = plans.find((p) => p.id === active.plan);
         const phase = activePlan && planStatus(activePlan, steps, active).phases.find((p) => p.id === active.phase);
         if (!phase) console.log(`
-A fase ativa ${ref} n\xE3o existe mais nos planos: betterdev stop para limpar.`);
+A fase ativa ${ref} n\xE3o existe mais nos planos: builderdev stop para limpar.`);
         else if (phase.status === "concluida") console.log(`
-A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3xima fase>.`);
+A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: builderdev start <plano>/<pr\xF3xima fase>.`);
       }
     }
     return statuses.some((s) => s.error) ? 1 : 0;
   },
   start(args) {
     const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { force: { type: "boolean" } } });
-    if (positionals.length !== 1) throw new UsageError("uso: betterdev start <plano>/<fase> [--force]");
+    if (positionals.length !== 1) throw new UsageError("uso: builderdev start <plano>/<fase> [--force]");
     const result = startPhase(findProjectRoot(), positionals[0], { force: values.force });
     for (const warning of result.warnings) console.error(`aviso: ${warning}`);
     const ref = `${result.state.plan}/${result.state.phase}`;
@@ -9535,17 +9535,17 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
   },
   brief(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
-    if (positionals.length > 1) throw new UsageError("uso: betterdev brief [plano/fase]");
+    if (positionals.length > 1) throw new UsageError("uso: builderdev brief [plano/fase]");
     const root = findProjectRoot();
     const ref = positionals[0] ? parsePhaseRef(positionals[0]) : readState(root);
-    if (!ref) throw new ProjectError("nenhuma fase ativa: use betterdev start <plano>/<fase> ou betterdev brief <plano>/<fase>");
+    if (!ref) throw new ProjectError("nenhuma fase ativa: use builderdev start <plano>/<fase> ou builderdev brief <plano>/<fase>");
     process.stdout.write(brief(findPlan(root, ref.plan), ref.phase));
     return 0;
   },
   reindex(args) {
     parseArgs({ args, allowPositionals: false, options: {} });
     const results = reindex(findProjectRoot());
-    if (!results.length) throw new ProjectError("nem .dev/memory nem .dev/errors existem: rode betterdev init");
+    if (!results.length) throw new ProjectError("nem .dev/memory nem .dev/errors existem: rode builderdev init");
     let failed = false;
     for (const r of results) {
       const count = `${r.entries} ${r.entries === 1 ? "entrada" : "entradas"}`;
@@ -9560,16 +9560,16 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
   },
   entry(args) {
     const [sub, ...rest] = args;
-    if (sub !== "new") throw new UsageError("uso: betterdev entry new --track conhecimento|bug --slug <slug>");
+    if (sub !== "new") throw new UsageError("uso: builderdev entry new --track conhecimento|bug --slug <slug>");
     const { values } = parseArgs({ args: rest, allowPositionals: false, options: { track: { type: "string" }, slug: { type: "string" } } });
-    if (!values.track || !values.slug) throw new UsageError("uso: betterdev entry new --track conhecimento|bug --slug <slug>");
+    if (!values.track || !values.slug) throw new UsageError("uso: builderdev entry new --track conhecimento|bug --slug <slug>");
     console.log(`criado      ${newEntry(findProjectRoot(), values.track, values.slug)}`);
     return 0;
   },
   recall(args) {
     const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { full: { type: "boolean" } } });
     const terms = parseTerms(positionals);
-    if (!terms.length) throw new UsageError("uso: betterdev recall <termos...> [--full]");
+    if (!terms.length) throw new UsageError("uso: builderdev recall <termos...> [--full]");
     const root = findProjectRoot();
     const hits = recall(root, terms);
     console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(" ")}`);
@@ -9594,12 +9594,12 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
   },
   migrate(args) {
     const [sub, ...rest] = args;
-    if (sub !== "split") throw new UsageError("uso: betterdev migrate split <arquivos...>");
+    if (sub !== "split") throw new UsageError("uso: builderdev migrate split <arquivos...>");
     const { positionals } = parseArgs({ args: rest, allowPositionals: true, options: {} });
-    if (!positionals.length) throw new UsageError("uso: betterdev migrate split <arquivos...>");
+    if (!positionals.length) throw new UsageError("uso: builderdev migrate split <arquivos...>");
     const cwd = process.cwd();
     const root = findProjectRoot(cwd);
-    if (!existsSync16(join17(root, ".dev"))) throw new ProjectError("nenhuma pasta .dev/ encontrada: rode betterdev init antes");
+    if (!existsSync16(join17(root, ".dev"))) throw new ProjectError("nenhuma pasta .dev/ encontrada: rode builderdev init antes");
     const files = positionals.map((p) => resolve8(cwd, p));
     const missing = positionals.filter((_, i) => !existsSync16(files[i]) || !statSync7(files[i]).isFile());
     if (missing.length) throw new ProjectError(`arquivo n\xE3o encontrado: ${missing.join(", ")}`);
@@ -9608,22 +9608,22 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
   },
   hooks(args) {
     const [sub, ...rest] = args;
-    if (rest.length || sub !== "install" && sub !== "uninstall") throw new UsageError("uso: betterdev hooks install | uninstall");
+    if (rest.length || sub !== "install" && sub !== "uninstall") throw new UsageError("uso: builderdev hooks install | uninstall");
     const cwd = process.cwd();
     if (sub === "install") {
       const r = installHook(cwd);
       const note = r.backup ? ` (hook anterior preservado; c\xF3pia em ${r.backup})` : "";
       console.log(`${r.action.padEnd(12)}${r.path}${note}`);
-      if (!onPath("betterdev")) {
-        console.error("aviso: betterdev n\xE3o est\xE1 no PATH, e o hook fica inerte at\xE9 isso mudar (rode npm link no reposit\xF3rio do betterdev)");
+      if (!onPath("builderdev")) {
+        console.error("aviso: builderdev n\xE3o est\xE1 no PATH, e o hook fica inerte at\xE9 isso mudar (rode npm link no reposit\xF3rio do builderdev)");
       }
     } else {
       const r = uninstallHook(cwd);
       const messages = {
         removido: `removido    ${r.path}`,
         restaurado: `restaurado  ${r.path} (hook anterior de volta; c\xF3pia .bak apagada)`,
-        "bloco removido": `bloco do betterdev removido de ${r.path}`,
-        ausente: `nada a fazer: ${r.path} n\xE3o tem o bloco do betterdev`
+        "bloco removido": `bloco do builderdev removido de ${r.path}`,
+        ausente: `nada a fazer: ${r.path} n\xE3o tem o bloco do builderdev`
       };
       console.log(messages[r.action]);
     }
@@ -9635,7 +9635,7 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     const [event, ...rest] = args;
     const run = event ? HOOKS[event] : void 0;
     if (!run || rest.length) {
-      console.error(`betterdev hook: uso: betterdev hook ${Object.keys(HOOKS).join(" | ")}`);
+      console.error(`builderdev hook: uso: builderdev hook ${Object.keys(HOOKS).join(" | ")}`);
       return 1;
     }
     try {
@@ -9646,7 +9646,7 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
       if (output) process.stdout.write(`${JSON.stringify(output)}
 `);
     } catch (err) {
-      console.error(`betterdev hook ${event}: ${err.message}`);
+      console.error(`builderdev hook ${event}: ${err.message}`);
       return 1;
     }
     return 0;
@@ -9656,11 +9656,11 @@ A fase ativa ${ref} j\xE1 est\xE1 conclu\xEDda: betterdev start <plano>/<pr\xF3x
     try {
       const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
       const [file, source] = positionals;
-      if (!file) throw new UsageError("uso: betterdev commit-msg <arquivo> [origem]");
+      if (!file) throw new UsageError("uso: builderdev commit-msg <arquivo> [origem]");
       prepareCommitMsg(file, source || void 0);
     } catch (err) {
-      const hint = err instanceof ProjectError ? " (fase ativa desatualizada? betterdev stop limpa)" : "";
-      console.error(`betterdev commit-msg: ${err.message}${hint}; o commit segue sem o trailer`);
+      const hint = err instanceof ProjectError ? " (fase ativa desatualizada? builderdev stop limpa)" : "";
+      console.error(`builderdev commit-msg: ${err.message}${hint}; o commit segue sem o trailer`);
     }
     return 0;
   }
@@ -9698,7 +9698,7 @@ function main(argv) {
   }
   const command = commands[name];
   if (!command) {
-    console.error(`betterdev: comando desconhecido "${name}"
+    console.error(`builderdev: comando desconhecido "${name}"
 
 ${USAGE}`);
     return 2;
@@ -9708,11 +9708,11 @@ ${USAGE}`);
   } catch (err) {
     const code = err.code ?? "";
     if (err instanceof UsageError || code.startsWith("ERR_PARSE_ARGS")) {
-      console.error(`betterdev ${name}: ${err.message}`);
+      console.error(`builderdev ${name}: ${err.message}`);
       return 2;
     }
     if (err instanceof ProjectError || err instanceof GitError) {
-      console.error(`betterdev ${name}: ${err.message}`);
+      console.error(`builderdev ${name}: ${err.message}`);
       return 1;
     }
     throw err;

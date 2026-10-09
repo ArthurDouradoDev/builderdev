@@ -4,11 +4,11 @@ Análise das referências listadas em [`IDEAS.md`](../IDEAS.md), feita em 22/09/
 
 ## O que esta pasta é
 
-São **notas destiladas**, não cópias. Cada arquivo diz o que a referência é, o que vale trazer para o BetterDev (e para onde), o que não vale e por quê. Os originais somam centenas de KB; copiá-los para cá repetiria o problema que o BetterDev existe para resolver.
+São **notas destiladas**, não cópias. Cada arquivo diz o que a referência é, o que vale trazer para o BuilderDev (e para onde), o que não vale e por quê. Os originais somam centenas de KB; copiá-los para cá repetiria o problema que o BuilderDev existe para resolver.
 
 Regras de uso:
 
-- **Nada aqui é carregado automaticamente** em sessões de IA. Consulte o arquivo da referência quando for implementar a parte do BetterDev que ela alimenta (coluna "Alimenta" abaixo).
+- **Nada aqui é carregado automaticamente** em sessões de IA. Consulte o arquivo da referência quando for implementar a parte do BuilderDev que ela alimenta (coluna "Alimenta" abaixo).
 - Os links apontam para o **commit exato que foi lido**. As referências mudam rápido; se for reaproveitar algo, confira a versão atual.
 - Números marcados como *alegação da fonte* foram medidos pelos autores das referências e **não foram verificados** por nós.
 - Todas as referências de código são MIT. Ao copiar trecho de código de alguma delas para o plugin, mantenha o aviso de copyright e a licença junto.
@@ -23,7 +23,7 @@ Regras de uso:
 | [karpathy.md](karpathy.md) | multica-ai/andrej-karpathy-skills | 4 regras de comportamento que cabem em ~15 linhas | Template do `CLAUDE.md`, campo `verify:` |
 | [refero-design.md](refero-design.md) | referodesign/refero_skill | Método de design por evidência: reference lock e decision ledger + regras de ofício | `/identidade-visual`, auditor de design |
 | [taste-skill.md](taste-skill.md) | Leonxlnx/taste-skill | Formato de `DESIGN.md` para o Stitch, dials, checagens mecânicas | `/stitch`, `/setup` modo existente |
-| [concorrentes.md](concorrentes.md) | BehiSecc/awesome-claude-skills + 4 projetos | Mapa de quem já faz partes do BetterDev | §6.4, `/security` |
+| [concorrentes.md](concorrentes.md) | BehiSecc/awesome-claude-skills + 4 projetos | Mapa de quem já faz partes do BuilderDev | §6.4, `/security` |
 
 ## Versões lidas
 
@@ -49,4 +49,4 @@ Os pontos em que referências independentes chegaram à mesma conclusão pesam m
 
 ## Onde as referências se contradizem
 
-As duas referências de design discordam em pontos concretos (Inter, Lucide, animações em loop). Gosto é opinião: o BetterDev adota **uma** autoridade para design, o método do Refero, e usa do taste-skill só o formato de `DESIGN.md` e as checagens mecânicas. Detalhes em [taste-skill.md](taste-skill.md).
+As duas referências de design discordam em pontos concretos (Inter, Lucide, animações em loop). Gosto é opinião: o BuilderDev adota **uma** autoridade para design, o método do Refero, e usa do taste-skill só o formato de `DESIGN.md` e as checagens mecânicas. Detalhes em [taste-skill.md](taste-skill.md).

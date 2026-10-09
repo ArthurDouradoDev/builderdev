@@ -13,7 +13,7 @@ let cli: BuiltCli;
 let root: string;
 
 beforeAll(() => {
-  cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+  cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
   cli = buildCli(cliDir);
 });
 
@@ -22,7 +22,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-memcli-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-memcli-'));
 });
 
 afterEach(() => {

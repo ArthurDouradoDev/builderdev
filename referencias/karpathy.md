@@ -8,7 +8,7 @@ Um CLAUDE.md de 2,4 KB (~600 tokens) com quatro princípios contra erros comuns 
 
 ## Trazer
 
-| Princípio | Resumo | Destino no BetterDev |
+| Princípio | Resumo | Destino no BuilderDev |
 |---|---|---|
 | **Pense antes de codar** | Declarar suposições; se há interpretações diferentes, apresentá-las em vez de escolher em silêncio; parar e perguntar quando algo está confuso. | Template do `CLAUDE.md` (1–2 linhas) |
 | **Simplicidade primeiro** | Só o que foi pedido; nenhuma abstração para uso único; nenhuma configurabilidade não solicitada; nenhum tratamento de erro para cenário impossível. | Template do `CLAUDE.md` |

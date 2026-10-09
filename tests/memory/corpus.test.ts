@@ -47,7 +47,7 @@ describe('regra do corpus', () => {
   });
 
   it('o lint de um arquivo compara com o corpus do projeto inteiro', () => {
-    const root = mkdtempSync(join(tmpdir(), 'betterdev-corpus-'));
+    const root = mkdtempSync(join(tmpdir(), 'builderdev-corpus-'));
     try {
       cpSync(fileURLToPath(new URL('../fixtures/memory/projeto', import.meta.url)), root, { recursive: true });
       const nova = join(root, '.dev/memory/nova.md');

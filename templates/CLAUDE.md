@@ -22,8 +22,8 @@
 
 ## Memória do projeto
 
-- `.dev/memory/` e `.dev/errors/`: aprendizados do projeto com frontmatter (module, tags); relevantes ao implementar ou depurar áreas documentadas. `betterdev recall <termos>` busca neles.
-- `.dev/plans/`: planos por fase, com o status derivado dos commits. `betterdev brief` mostra a fase ativa.
+- `.dev/memory/` e `.dev/errors/`: aprendizados do projeto com frontmatter (module, tags); relevantes ao implementar ou depurar áreas documentadas. `builderdev recall <termos>` busca neles.
+- `.dev/plans/`: planos por fase, com o status derivado dos commits. `builderdev brief` mostra a fase ativa.
 
 ## Ao compactar
 

@@ -24,7 +24,7 @@ import { clearState, readState, startPhase } from './state';
 import { buildReport, formatReport as formatStats, isIsoDate } from './stats/report';
 import { defaultProjectsDir } from './stats/transcripts';
 
-const USAGE = `uso: betterdev <comando> [opções]
+const USAGE = `uso: builderdev <comando> [opções]
 
 comandos:
   lint [caminhos...]          valida planos, entradas de memory/ e errors/ e o .dev/CLAUDE.md
@@ -71,7 +71,7 @@ const commands: Record<string, Command> = {
     for (const target of positionals) {
       const abs = resolve(cwd, target);
       if (!existsSync(abs)) {
-        console.error(`betterdev lint: caminho não encontrado: ${target}`);
+        console.error(`builderdev lint: caminho não encontrado: ${target}`);
         missing++;
         continue;
       }
@@ -131,8 +131,8 @@ const commands: Record<string, Command> = {
         const ref = `${active.plan}/${active.phase}`;
         const activePlan = plans.find((p) => p.id === active.plan);
         const phase = activePlan && planStatus(activePlan, steps, active).phases.find((p) => p.id === active.phase);
-        if (!phase) console.log(`\nA fase ativa ${ref} não existe mais nos planos: betterdev stop para limpar.`);
-        else if (phase.status === 'concluida') console.log(`\nA fase ativa ${ref} já está concluída: betterdev start <plano>/<próxima fase>.`);
+        if (!phase) console.log(`\nA fase ativa ${ref} não existe mais nos planos: builderdev stop para limpar.`);
+        else if (phase.status === 'concluida') console.log(`\nA fase ativa ${ref} já está concluída: builderdev start <plano>/<próxima fase>.`);
       }
     }
     return statuses.some((s) => s.error) ? 1 : 0;
@@ -140,7 +140,7 @@ const commands: Record<string, Command> = {
 
   start(args) {
     const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { force: { type: 'boolean' } } });
-    if (positionals.length !== 1) throw new UsageError('uso: betterdev start <plano>/<fase> [--force]');
+    if (positionals.length !== 1) throw new UsageError('uso: builderdev start <plano>/<fase> [--force]');
     const result = startPhase(findProjectRoot(), positionals[0]!, { force: values.force });
     for (const warning of result.warnings) console.error(`aviso: ${warning}`);
     const ref = `${result.state.plan}/${result.state.phase}`;
@@ -159,10 +159,10 @@ const commands: Record<string, Command> = {
 
   brief(args) {
     const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
-    if (positionals.length > 1) throw new UsageError('uso: betterdev brief [plano/fase]');
+    if (positionals.length > 1) throw new UsageError('uso: builderdev brief [plano/fase]');
     const root = findProjectRoot();
     const ref = positionals[0] ? parsePhaseRef(positionals[0]) : readState(root);
-    if (!ref) throw new ProjectError('nenhuma fase ativa: use betterdev start <plano>/<fase> ou betterdev brief <plano>/<fase>');
+    if (!ref) throw new ProjectError('nenhuma fase ativa: use builderdev start <plano>/<fase> ou builderdev brief <plano>/<fase>');
     process.stdout.write(brief(findPlan(root, ref.plan), ref.phase));
     return 0;
   },
@@ -170,7 +170,7 @@ const commands: Record<string, Command> = {
   reindex(args) {
     parseArgs({ args, allowPositionals: false, options: {} });
     const results = reindex(findProjectRoot());
-    if (!results.length) throw new ProjectError('nem .dev/memory nem .dev/errors existem: rode betterdev init');
+    if (!results.length) throw new ProjectError('nem .dev/memory nem .dev/errors existem: rode builderdev init');
     let failed = false;
     for (const r of results) {
       const count = `${r.entries} ${r.entries === 1 ? 'entrada' : 'entradas'}`;
@@ -186,9 +186,9 @@ const commands: Record<string, Command> = {
 
   entry(args) {
     const [sub, ...rest] = args;
-    if (sub !== 'new') throw new UsageError('uso: betterdev entry new --track conhecimento|bug --slug <slug>');
+    if (sub !== 'new') throw new UsageError('uso: builderdev entry new --track conhecimento|bug --slug <slug>');
     const { values } = parseArgs({ args: rest, allowPositionals: false, options: { track: { type: 'string' }, slug: { type: 'string' } } });
-    if (!values.track || !values.slug) throw new UsageError('uso: betterdev entry new --track conhecimento|bug --slug <slug>');
+    if (!values.track || !values.slug) throw new UsageError('uso: builderdev entry new --track conhecimento|bug --slug <slug>');
     console.log(`criado      ${newEntry(findProjectRoot(), values.track, values.slug)}`);
     return 0;
   },
@@ -196,7 +196,7 @@ const commands: Record<string, Command> = {
   recall(args) {
     const { positionals, values } = parseArgs({ args, allowPositionals: true, options: { full: { type: 'boolean' } } });
     const terms = parseTerms(positionals);
-    if (!terms.length) throw new UsageError('uso: betterdev recall <termos...> [--full]');
+    if (!terms.length) throw new UsageError('uso: builderdev recall <termos...> [--full]');
     const root = findProjectRoot();
     const hits = recall(root, terms);
     console.log(hits.length ? formatRecall(root, hits, { full: values.full }) : `nenhuma entrada coincide com: ${terms.join(' ')}`);
@@ -223,12 +223,12 @@ const commands: Record<string, Command> = {
 
   migrate(args) {
     const [sub, ...rest] = args;
-    if (sub !== 'split') throw new UsageError('uso: betterdev migrate split <arquivos...>');
+    if (sub !== 'split') throw new UsageError('uso: builderdev migrate split <arquivos...>');
     const { positionals } = parseArgs({ args: rest, allowPositionals: true, options: {} });
-    if (!positionals.length) throw new UsageError('uso: betterdev migrate split <arquivos...>');
+    if (!positionals.length) throw new UsageError('uso: builderdev migrate split <arquivos...>');
     const cwd = process.cwd();
     const root = findProjectRoot(cwd);
-    if (!existsSync(join(root, '.dev'))) throw new ProjectError('nenhuma pasta .dev/ encontrada: rode betterdev init antes');
+    if (!existsSync(join(root, '.dev'))) throw new ProjectError('nenhuma pasta .dev/ encontrada: rode builderdev init antes');
     const files = positionals.map((p) => resolve(cwd, p));
     const missing = positionals.filter((_, i) => !existsSync(files[i]!) || !statSync(files[i]!).isFile());
     if (missing.length) throw new ProjectError(`arquivo não encontrado: ${missing.join(', ')}`);
@@ -238,22 +238,22 @@ const commands: Record<string, Command> = {
 
   hooks(args) {
     const [sub, ...rest] = args;
-    if (rest.length || (sub !== 'install' && sub !== 'uninstall')) throw new UsageError('uso: betterdev hooks install | uninstall');
+    if (rest.length || (sub !== 'install' && sub !== 'uninstall')) throw new UsageError('uso: builderdev hooks install | uninstall');
     const cwd = process.cwd();
     if (sub === 'install') {
       const r = installHook(cwd);
       const note = r.backup ? ` (hook anterior preservado; cópia em ${r.backup})` : '';
       console.log(`${r.action.padEnd(12)}${r.path}${note}`);
-      if (!onPath('betterdev')) {
-        console.error('aviso: betterdev não está no PATH, e o hook fica inerte até isso mudar (rode npm link no repositório do betterdev)');
+      if (!onPath('builderdev')) {
+        console.error('aviso: builderdev não está no PATH, e o hook fica inerte até isso mudar (rode npm link no repositório do builderdev)');
       }
     } else {
       const r = uninstallHook(cwd);
       const messages: Record<string, string> = {
         removido: `removido    ${r.path}`,
         restaurado: `restaurado  ${r.path} (hook anterior de volta; cópia .bak apagada)`,
-        'bloco removido': `bloco do betterdev removido de ${r.path}`,
-        ausente: `nada a fazer: ${r.path} não tem o bloco do betterdev`,
+        'bloco removido': `bloco do builderdev removido de ${r.path}`,
+        ausente: `nada a fazer: ${r.path} não tem o bloco do builderdev`,
       };
       console.log(messages[r.action]);
     }
@@ -266,17 +266,17 @@ const commands: Record<string, Command> = {
     const [event, ...rest] = args;
     const run = event ? HOOKS[event] : undefined;
     if (!run || rest.length) {
-      console.error(`betterdev hook: uso: betterdev hook ${Object.keys(HOOKS).join(' | ')}`);
+      console.error(`builderdev hook: uso: builderdev hook ${Object.keys(HOOKS).join(' | ')}`);
       return 1;
     }
     try {
       const input = parseHookInput(readStdin());
       const root = hookProjectRoot(input);
-      if (!root) return 0; // fora de um projeto BetterDev: sem saída
+      if (!root) return 0; // fora de um projeto BuilderDev: sem saída
       const output = run(root, input);
       if (output) process.stdout.write(`${JSON.stringify(output)}\n`);
     } catch (err) {
-      console.error(`betterdev hook ${event}: ${(err as Error).message}`);
+      console.error(`builderdev hook ${event}: ${(err as Error).message}`);
       return 1;
     }
     return 0;
@@ -287,11 +287,11 @@ const commands: Record<string, Command> = {
     try {
       const { positionals } = parseArgs({ args, allowPositionals: true, options: {} });
       const [file, source] = positionals;
-      if (!file) throw new UsageError('uso: betterdev commit-msg <arquivo> [origem]');
+      if (!file) throw new UsageError('uso: builderdev commit-msg <arquivo> [origem]');
       prepareCommitMsg(file, source || undefined);
     } catch (err) {
-      const hint = err instanceof ProjectError ? ' (fase ativa desatualizada? betterdev stop limpa)' : '';
-      console.error(`betterdev commit-msg: ${(err as Error).message}${hint}; o commit segue sem o trailer`);
+      const hint = err instanceof ProjectError ? ' (fase ativa desatualizada? builderdev stop limpa)' : '';
+      console.error(`builderdev commit-msg: ${(err as Error).message}${hint}; o commit segue sem o trailer`);
     }
     return 0;
   },
@@ -339,7 +339,7 @@ function main(argv: string[]): number {
   }
   const command = commands[name];
   if (!command) {
-    console.error(`betterdev: comando desconhecido "${name}"\n\n${USAGE}`);
+    console.error(`builderdev: comando desconhecido "${name}"\n\n${USAGE}`);
     return 2;
   }
   try {
@@ -348,11 +348,11 @@ function main(argv: string[]): number {
     // parseArgs lança TypeError com code ERR_PARSE_ARGS_* para opções inválidas.
     const code = (err as { code?: string }).code ?? '';
     if (err instanceof UsageError || code.startsWith('ERR_PARSE_ARGS')) {
-      console.error(`betterdev ${name}: ${(err as Error).message}`);
+      console.error(`builderdev ${name}: ${(err as Error).message}`);
       return 2;
     }
     if (err instanceof ProjectError || err instanceof GitError) {
-      console.error(`betterdev ${name}: ${err.message}`);
+      console.error(`builderdev ${name}: ${err.message}`);
       return 1;
     }
     throw err;

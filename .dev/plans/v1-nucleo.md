@@ -1,6 +1,6 @@
 ---
 id: v1-nucleo
-title: Núcleo do BetterDev - plano, memória e hooks
+title: Núcleo do BuilderDev - plano, memória e hooks
 branch: feat/v1-nucleo
 created: 2026-09-22
 phases:
@@ -15,7 +15,7 @@ phases:
       - src/init.ts
       - templates/plan.md
       - .claude-plugin/plugin.json
-      - bin/betterdev
+      - bin/builderdev
       - skills/plan/SKILL.md
       - tests/plan/
       - tests/init/
@@ -93,7 +93,7 @@ phases:
     commit_msg: "feat: medição de sessões e /setup para projetos existentes"
 ---
 
-# Núcleo do BetterDev - plano, memória e hooks
+# Núcleo do BuilderDev - plano, memória e hooks
 
 ## Contexto
 
@@ -101,7 +101,7 @@ Implementação dos passos 1 a 3 da ordem de construção do [CONCEPCAO](../../C
 
 ## Fora do escopo
 
-- Visualizador (`betterdev watch`, UI web, SQLite): plano próprio depois deste.
+- Visualizador (`builderdev watch`, UI web, SQLite): plano próprio depois deste.
 - `/refresh`, auditores (`/performance`, `/security`), `/identidade-visual` e `/stitch`.
 - Hosts além do Claude Code.
 - Publicação no npm e no marketplace: nesta versão o CLI é instalado com `npm link` e o plugin carregado com `claude --plugin-dir`.
@@ -122,13 +122,13 @@ Ainda não há entradas em `.dev/memory` neste repositório. Restrições que v�
 
 ### Objetivo
 
-Criar o projeto TypeScript com o CLI `betterdev`, o parser e o validador do formato de plano, e o plugin com a skill `/plan`. Ao final, um plano gerado numa conversa real passa no `betterdev lint`.
+Criar o projeto TypeScript com o CLI `builderdev`, o parser e o validador do formato de plano, e o plugin com a skill `/plan`. Ao final, um plano gerado numa conversa real passa no `builderdev lint`.
 
 ### Escopo
 
 #### Código
 
-- **Projeto:** `package.json` com `"type": "module"`, `engines.node >= 20`, `bin: { betterdev: dist/cli.js }` e scripts `typecheck` (`tsc --noEmit`), `test` (`vitest run`) e `build` (esbuild gerando **um único arquivo** `dist/cli.js`, com dependências embutidas). Dependência de execução: só `yaml`. `tsconfig.json` com `strict`.
+- **Projeto:** `package.json` com `"type": "module"`, `engines.node >= 20`, `bin: { builderdev: dist/cli.js }` e scripts `typecheck` (`tsc --noEmit`), `test` (`vitest run`) e `build` (esbuild gerando **um único arquivo** `dist/cli.js`, com dependências embutidas). Dependência de execução: só `yaml`. `tsconfig.json` com `strict`.
 - **`dist/` é versionado.** O Claude Code não roda build ao instalar um plugin; os hooks e o `bin/` executam o `dist/cli.js` diretamente.
 - **`src/cli.ts`:** roteador de subcomandos com `node:util` `parseArgs`, sem dependência extra. Nesta fase: `lint` e `init`.
 - **`src/plan/parse.ts`:** lê o frontmatter com `yaml` e percorre o corpo linha a linha, reconhecendo títulos (`#`–`####`) e **ignorando títulos dentro de blocos de código**. Devolve o plano estruturado: fases do YAML e, para cada `## fN · título`, as seções com linha inicial e final.
@@ -139,15 +139,15 @@ Criar o projeto TypeScript com o CLI `betterdev`, o parser e o validador do form
   - `files` e `verify` presentes e não vazios; `commit_msg` no formato `tipo: texto`, com `tipo` em `feat|fix|refactor|test|docs|chore|perf|style|build|ci`;
   - seções obrigatórias: `## Contexto` e, em cada fase, `### Objetivo`, `### Escopo` › `#### Código` e `### Validação visual`;
   - `### Objetivo` com no máximo 3 linhas de texto (aviso, não erro).
-- **`src/init.ts` (`betterdev init`):** cria `.dev/{plans,memory,errors,templates,.local}`, copia `templates/plan.md` para `.dev/templates/` e acrescenta `.dev/.local/` ao `.gitignore`. É idempotente: não sobrescreve nada que exista e **nunca edita o `CLAUDE.md`** (isso fica com o `/setup`, na f5).
+- **`src/init.ts` (`builderdev init`):** cria `.dev/{plans,memory,errors,templates,.local}`, copia `templates/plan.md` para `.dev/templates/` e acrescenta `.dev/.local/` ao `.gitignore`. É idempotente: não sobrescreve nada que exista e **nunca edita o `CLAUDE.md`** (isso fica com o `/setup`, na f5).
 - **Plugin:**
-  - `.claude-plugin/plugin.json` com nome `betterdev`, versão e descrição;
-  - `bin/betterdev`: script sh de uma linha que executa `node "<pasta do script>/../dist/cli.js" "$@"`. O Claude Code põe `bin/` no PATH da ferramenta Bash, então dentro das sessões o comando funciona sem instalação global;
-  - `skills/plan/SKILL.md` com `disable-model-invocation: true`. O conteúdo é o prompt de planejamento da §4.3 do CONCEPCAO, apontando para `${CLAUDE_PLUGIN_ROOT}/templates/plan.md`. Ordem do corpo: (1) roda nesta sessão, usando a conversa como contexto; (2) proporcionalidade: se o diff cabe numa frase, responde sem plano; (3) preenche o template; (4) grava em `.dev/plans/<id>.md`; (5) roda `betterdev lint` e corrige até passar.
+  - `.claude-plugin/plugin.json` com nome `builderdev`, versão e descrição;
+  - `bin/builderdev`: script sh de uma linha que executa `node "<pasta do script>/../dist/cli.js" "$@"`. O Claude Code põe `bin/` no PATH da ferramenta Bash, então dentro das sessões o comando funciona sem instalação global;
+  - `skills/plan/SKILL.md` com `disable-model-invocation: true`. O conteúdo é o prompt de planejamento da §4.3 do CONCEPCAO, apontando para `${CLAUDE_PLUGIN_ROOT}/templates/plan.md`. Ordem do corpo: (1) roda nesta sessão, usando a conversa como contexto; (2) proporcionalidade: se o diff cabe numa frase, responde sem plano; (3) preenche o template; (4) grava em `.dev/plans/<id>.md`; (5) roda `builderdev lint` e corrige até passar.
 
 #### Interface
 
-Saída do `betterdev lint`, uma linha por problema, com código de saída 1 quando há erro:
+Saída do `builderdev lint`, uma linha por problema, com código de saída 1 quando há erro:
 
 ```
 .dev/plans/e4.md:34  erro   phase-title-mismatch  "## f2 · Endpoint A/B" difere do YAML "Endpoint de diff A/B"
@@ -164,17 +164,17 @@ Saída do `betterdev lint`, uma linha por problema, com código de saída 1 quan
 
 ### Validação visual
 
-- Rodar `npm link` e depois `betterdev lint .dev/plans/v1-nucleo.md` na raiz deste repositório: o plano passa sem erros.
+- Rodar `npm link` e depois `builderdev lint .dev/plans/v1-nucleo.md` na raiz deste repositório: o plano passa sem erros.
 - Estragar de propósito o título da f2 no corpo e rodar de novo: a mensagem aponta arquivo, linha e os dois títulos.
-- Abrir `claude --plugin-dir .` num projeto de teste, discutir uma mudança pequena e rodar `/betterdev:plan`. Conferir que o arquivo foi gravado em `.dev/plans/`, passa no lint e lê bem como prosa.
-- Na mesma sessão, pedir `/betterdev:plan` para algo trivial ("renomeie a variável x"): a skill responde sem gerar plano.
+- Abrir `claude --plugin-dir .` num projeto de teste, discutir uma mudança pequena e rodar `/builderdev:plan`. Conferir que o arquivo foi gravado em `.dev/plans/`, passa no lint e lê bem como prosa.
+- Na mesma sessão, pedir `/builderdev:plan` para algo trivial ("renomeie a variável x"): a skill responde sem gerar plano.
 - Esta fase termina antes dos git hooks existirem. Fazer o commit com `git commit --trailer "Plan-Step: v1-nucleo/f1"` para que a f2 enxergue a f1 como concluída.
 
 ## f2 · Status derivado do git e fase ativa
 
 ### Objetivo
 
-Derivar o status de cada fase dos commits, registrar localmente qual fase está ativa e preencher o commit com a mensagem e o trailer da fase. Ao final, `betterdev status` mostra o plano inteiro sem nenhum campo de status escrito no `.md`.
+Derivar o status de cada fase dos commits, registrar localmente qual fase está ativa e preencher o commit com a mensagem e o trailer da fase. Ao final, `builderdev status` mostra o plano inteiro sem nenhum campo de status escrito no `.md`.
 
 ### Escopo
 
@@ -186,23 +186,23 @@ Derivar o status de cada fase dos commits, registrar localmente qual fase está 
   - **bloqueada:** alguma dependência não está concluída. A dependência é `needs`, ou a fase anterior quando `needs` está ausente;
   - **ativa:** é a fase gravada no estado local;
   - **pendente:** nenhum dos anteriores.
-- **`src/state.ts`:** lê e grava `.dev/.local/state.json` (`{ plan, phase, startedAt }`). `betterdev start <plano>/<fase>` valida que a fase existe e avisa se está bloqueada (`--force` para ativar mesmo assim). `betterdev stop` limpa o estado.
-- **`src/plan/brief.ts` (`betterdev brief`):** imprime só a fase ativa: a entrada dela no YAML e o bloco `## fN` do corpo, além de `Contexto` e `Fora do escopo` do plano. É o que a IA lê em vez do plano inteiro.
-- **`betterdev status [plano] [--json]`:** tabela por fase; `--json` já no formato que o visualizador vai consumir.
-- **`src/git/hooks-install.ts` (`betterdev hooks install | uninstall`):** instala `prepare-commit-msg` na pasta de hooks efetiva (respeita `core.hooksPath`):
+- **`src/state.ts`:** lê e grava `.dev/.local/state.json` (`{ plan, phase, startedAt }`). `builderdev start <plano>/<fase>` valida que a fase existe e avisa se está bloqueada (`--force` para ativar mesmo assim). `builderdev stop` limpa o estado.
+- **`src/plan/brief.ts` (`builderdev brief`):** imprime só a fase ativa: a entrada dela no YAML e o bloco `## fN` do corpo, além de `Contexto` e `Fora do escopo` do plano. É o que a IA lê em vez do plano inteiro.
+- **`builderdev status [plano] [--json]`:** tabela por fase; `--json` já no formato que o visualizador vai consumir.
+- **`src/git/hooks-install.ts` (`builderdev hooks install | uninstall`):** instala `prepare-commit-msg` na pasta de hooks efetiva (respeita `core.hooksPath`):
   - arquivo ausente: cria;
-  - arquivo com o marcador `# betterdev`: atualiza o bloco;
+  - arquivo com o marcador `# builderdev`: atualiza o bloco;
   - arquivo de outra ferramenta: acrescenta o bloco marcado no final, depois de salvar uma cópia `.bak`;
   - `uninstall` remove só o bloco marcado.
 
-  O bloco chama `betterdev commit-msg "$1" "$2"` somente se o comando existir no PATH, e **nunca bloqueia um commit** (termina sempre com sucesso).
-- **`src/commit-msg.ts` (`betterdev commit-msg <arquivo> [origem]`):** sem fase ativa, não faz nada. Em merge ou squash, não faz nada. Com mensagem vazia, preenche com o `commit_msg` da fase. Em todos os outros casos, acrescenta `Plan-Step: <plano>/<fase>` via `git interpret-trailers --if-exists doNothing`, sem duplicar.
+  O bloco chama `builderdev commit-msg "$1" "$2"` somente se o comando existir no PATH, e **nunca bloqueia um commit** (termina sempre com sucesso).
+- **`src/commit-msg.ts` (`builderdev commit-msg <arquivo> [origem]`):** sem fase ativa, não faz nada. Em merge ou squash, não faz nada. Com mensagem vazia, preenche com o `commit_msg` da fase. Em todos os outros casos, acrescenta `Plan-Step: <plano>/<fase>` via `git interpret-trailers --if-exists doNothing`, sem duplicar.
 
 #### Interface
 
 ```
-$ betterdev status v1-nucleo
-v1-nucleo · Núcleo do BetterDev - plano, memória e hooks
+$ builderdev status v1-nucleo
+v1-nucleo · Núcleo do BuilderDev - plano, memória e hooks
   f1  concluída  Fundação, formato de plano e /plan          a3f2c91
   f2  ativa      Status derivado do git e fase ativa
   f3  pendente   Memória com frontmatter, índice gerado e /recall
@@ -219,10 +219,10 @@ v1-nucleo · Núcleo do BetterDev - plano, memória e hooks
 
 ### Validação visual
 
-- Neste repositório: `betterdev hooks install`, depois `betterdev start v1-nucleo/f2` e `betterdev status`. A f1 aparece concluída (graças ao trailer manual) e a f2, ativa.
+- Neste repositório: `builderdev hooks install`, depois `builderdev start v1-nucleo/f2` e `builderdev status`. A f1 aparece concluída (graças ao trailer manual) e a f2, ativa.
 - `git commit --allow-empty` sem `-m`: o editor abre já com `feat: status de fases derivado do git` e o trailer.
-- `betterdev brief` mostra só a f2, sem o texto das outras fases.
-- `betterdev hooks uninstall` e conferir que `.git/hooks/prepare-commit-msg` voltou ao estado anterior.
+- `builderdev brief` mostra só a f2, sem o texto das outras fases.
+- `builderdev hooks uninstall` e conferir que `.git/hooks/prepare-commit-msg` voltou ao estado anterior.
 
 ## f3 · Memória com frontmatter, índice gerado e /recall
 
@@ -238,16 +238,16 @@ Definir o formato das entradas de memória e de erros, validá-lo por script, ge
   - Obrigatórios em ambas as trilhas: `track` (`conhecimento` | `bug`), `type`, `module`, `summary` (uma linha, ≤ 120 caracteres; vira a linha do índice), `tags` (1 a 8, minúsculas com hífen) e `created`. Opcionais: `updated` e `applies_when` (até 5).
   - `type` é um enum fechado: conhecimento = `convencao | decisao | padrao | ferramenta | fluxo | pratica`; bug = `build | teste | runtime | performance | dados | seguranca | ui | integracao | logica`.
   - Obrigatórios só na trilha `bug`: `symptoms` (1 a 5), `root_cause`, `resolution` e `occurrences` (começa em 1; o `/wrap` incrementa quando o mesmo erro volta).
-- **`src/memory/lint.ts`** (entra no `betterdev lint`):
+- **`src/memory/lint.ts`** (entra no `builderdev lint`):
   - schema acima;
   - nome do arquivo igual ao slug, sem data;
   - corpo ≤ 40 linhas, `.dev/CLAUDE.md` ≤ 150 linhas, índice ≤ 200 linhas;
   - **regra do corpus**: aviso quando `module` ou uma tag é quase idêntica a um valor já usado. Normaliza caixa, hífen e plural e considera distância de edição ≤ 2, sugerindo o valor existente.
-- **`src/memory/reindex.ts` (`betterdev reindex`):** gera `.dev/memory/index.md` e `.dev/errors/index.md` com o cabeçalho `<!-- GERADO por betterdev reindex; não editar -->`. Uma linha por entrada, ordenada por `module` e depois por slug. Saída determinística: mesma entrada, mesmos bytes.
+- **`src/memory/reindex.ts` (`builderdev reindex`):** gera `.dev/memory/index.md` e `.dev/errors/index.md` com o cabeçalho `<!-- GERADO por builderdev reindex; não editar -->`. Uma linha por entrada, ordenada por `module` e depois por slug. Saída determinística: mesma entrada, mesmos bytes.
   - **Os índices ficam no `.gitignore`.** São regenerados pelo hook de sessão (f4) e pelo `/wrap`, então nunca geram conflito de merge.
-- **`src/memory/entry.ts` (`betterdev entry new --track <t> --slug <s>`):** cria o arquivo com o frontmatter da trilha pronto para preencher, e recusa se o slug já existir.
-- **`src/memory/recall.ts` (`betterdev recall <termos> [--full]`):** pontua as entradas por coincidência dos termos, com peso decrescente em `tags`, `module`, `applies_when`, `summary`, título e `symptoms`. Lê só o frontmatter e devolve até 5 resultados com caminho, `summary` e campos que coincidiram. `--full` imprime também o corpo dos 3 primeiros.
-- **`skills/recall/SKILL.md`:** roda `betterdev recall`, lê por completo só o que é relevante e **sinaliza quando uma entrada contradiz o código atual**, em vez de repeti-la. Pode ser invocada pelo modelo.
+- **`src/memory/entry.ts` (`builderdev entry new --track <t> --slug <s>`):** cria o arquivo com o frontmatter da trilha pronto para preencher, e recusa se o slug já existir.
+- **`src/memory/recall.ts` (`builderdev recall <termos> [--full]`):** pontua as entradas por coincidência dos termos, com peso decrescente em `tags`, `module`, `applies_when`, `summary`, título e `symptoms`. Lê só o frontmatter e devolve até 5 resultados com caminho, `summary` e campos que coincidiram. `--full` imprime também o corpo dos 3 primeiros.
+- **`skills/recall/SKILL.md`:** roda `builderdev recall`, lê por completo só o que é relevante e **sinaliza quando uma entrada contradiz o código atual**, em vez de repeti-la. Pode ser invocada pelo modelo.
 
 #### Interface
 
@@ -257,7 +257,7 @@ Linha do índice gerado:
 - [viewshed-crs-metrico](viewshed-crs-metrico.md) · bug/dados · geom · crs, viewshed - Viewshed exige CRS métrico; em graus a máscara sai deslocada
 ```
 
-Saída do `betterdev recall viewshed crs`:
+Saída do `builderdev recall viewshed crs`:
 
 ```
 1. .dev/errors/viewshed-crs-metrico.md   bug/dados · geom
@@ -274,9 +274,9 @@ Saída do `betterdev recall viewshed crs`:
 
 ### Validação visual
 
-- Num projeto de teste com `betterdev init`, criar 4 entradas com `betterdev entry new` (duas de cada trilha), rodar `betterdev reindex` e abrir os dois `index.md`: uma linha legível por entrada, sem precisar abrir os arquivos.
+- Num projeto de teste com `builderdev init`, criar 4 entradas com `builderdev entry new` (duas de cada trilha), rodar `builderdev reindex` e abrir os dois `index.md`: uma linha legível por entrada, sem precisar abrir os arquivos.
 - Criar uma entrada com `module: Geom` e conferir o aviso sugerindo `geom`.
-- Numa sessão com `claude --plugin-dir`, perguntar algo coberto por uma entrada e rodar `/betterdev:recall`. A resposta cita a entrada certa, e a skill lê por completo só ela.
+- Numa sessão com `claude --plugin-dir`, perguntar algo coberto por uma entrada e rodar `/builderdev:recall`. A resposta cita a entrada certa, e a skill lê por completo só ela.
 
 ## f4 · Hooks de sessão, verificação no Stop e /wrap
 
@@ -292,14 +292,14 @@ Fechar o ciclo automático. Toda sessão começa com o estado do projeto injetad
   - `SessionStart` com matcher `startup|resume|clear|compact`;
   - `Stop` com `timeout` de 300 s;
   - `PostCompact`.
-- **Todos os hooks são inertes fora de projetos BetterDev.** Sem `.dev/` na raiz do projeto, terminam sem saída.
+- **Todos os hooks são inertes fora de projetos BuilderDev.** Sem `.dev/` na raiz do projeto, terminam sem saída.
 - **`src/hooks/session-start.ts`:** regenera os índices e emite `hookSpecificOutput.additionalContext` com:
   - branch e `git log --oneline -5`;
   - `git diff --stat` resumido a 10 linhas;
-  - fase ativa: plano, título, Objetivo, `files` e `verify`, com a indicação "detalhes: `betterdev brief`";
+  - fase ativa: plano, título, Objetivo, `files` e `verify`, com a indicação "detalhes: `builderdev brief`";
   - os dois índices.
 
-  Teto de 8.000 caracteres: corta primeiro o diff e depois o índice mais longo, com marcador `[+N linhas: betterdev reindex]`. Cada injeção é registrada em `.dev/.local/metrics.jsonl` (`evento`, `source`, `caracteres`, `ts`).
+  Teto de 8.000 caracteres: corta primeiro o diff e depois o índice mais longo, com marcador `[+N linhas: builderdev reindex]`. Cada injeção é registrada em `.dev/.local/metrics.jsonl` (`evento`, `source`, `caracteres`, `ts`).
 - **`src/hooks/stop.ts`:** sai sem fazer nada se:
   - não há fase ativa;
   - `stop_hook_active` é verdadeiro;
@@ -315,9 +315,9 @@ Fechar o ciclo automático. Toda sessão começa com o estado do projeto injetad
 - **`src/config.ts`:** lê `.dev/config.json` (opcional) com padrões seguros.
 - **`skills/wrap/SKILL.md`** (`disable-model-invocation: true`, ≤ 8 KB). Receita, nesta ordem:
   1. Aplicar o **critério de durabilidade** ao que aconteceu na sessão: se a entrada sumisse, alguém lendo o código final repetiria o erro ou refaria uma investigação grande? Narrativa de sessão e lista de mudanças nunca passam. Se nada passa, responder "nada a registrar" com o motivo, e terminar.
-  2. Rodar `betterdev recall` com os termos do aprendizado. Se o mesmo erro já existe, atualizar a entrada e incrementar `occurrences`, em vez de criar outra.
-  3. Criar no máximo **uma** entrada com `betterdev entry new` e preenchê-la.
-  4. Rodar `betterdev lint` e `betterdev reindex` até passar.
+  2. Rodar `builderdev recall` com os termos do aprendizado. Se o mesmo erro já existe, atualizar a entrada e incrementar `occurrences`, em vez de criar outra.
+  3. Criar no máximo **uma** entrada com `builderdev entry new` e preenchê-la.
+  4. Rodar `builderdev lint` e `builderdev reindex` até passar.
   5. Reportar em 2 a 3 linhas: o que foi registrado, onde, e por que passou no critério.
 
   A decisão e a redação ficam no modelo da sessão; toda a validação é do script.
@@ -327,11 +327,11 @@ Fechar o ciclo automático. Toda sessão começa com o estado do projeto injetad
 Contexto injetado no início da sessão (exemplo):
 
 ```
-[betterdev] branch feat/v1-nucleo · fase ativa v1-nucleo/f4 - Hooks de sessão, verificação no Stop e /wrap
+[builderdev] branch feat/v1-nucleo · fase ativa v1-nucleo/f4 - Hooks de sessão, verificação no Stop e /wrap
 Objetivo: Fechar o ciclo automático...
 Arquivos: hooks/hooks.json, src/hooks/*.ts, skills/wrap/SKILL.md
 Verificação: npm run typecheck · npx vitest run tests/hooks · npm run build
-Detalhes da fase: betterdev brief
+Detalhes da fase: builderdev brief
 Últimos commits: ...
 Memória (3): ...   Erros (2): ...
 ```
@@ -339,7 +339,7 @@ Memória (3): ...   Erros (2): ...
 Retorno do `Stop` quando a verificação falha:
 
 ```
-[betterdev] verificação da fase f4 falhou: npx vitest run tests/hooks
+[builderdev] verificação da fase f4 falhou: npx vitest run tests/hooks
   FAIL tests/hooks/stop.test.ts > ignora quando stop_hook_active
   AssertionError: expected 'block' to be undefined
 Log completo: .dev/.local/verify/2026-09-23T14-02-11.log
@@ -358,13 +358,13 @@ Log completo: .dev/.local/verify/2026-09-23T14-02-11.log
 - Quebrar um teste de `tests/hooks` e pedir ao Claude uma alteração qualquer em `src/hooks/`. No fim do turno, aparece o "Stop hook feedback" com a falha, e o Claude corrige sem você pedir.
 - Terminar um turno sem mexer nos arquivos da fase: nada roda (conferir no `metrics.jsonl` que não há nova verificação).
 - Rodar `/compact` e perguntar "qual é a fase ativa e o que falta nela?": a resposta vem do contexto reinjetado, sem o Claude ler o plano.
-- Rodar `/betterdev:wrap` numa sessão rotineira: a resposta deve ser "nada a registrar". Numa sessão em que um problema não óbvio foi resolvido, deve surgir uma única entrada que passa no lint.
+- Rodar `/builderdev:wrap` numa sessão rotineira: a resposta deve ser "nada a registrar". Numa sessão em que um problema não óbvio foi resolvido, deve surgir uma única entrada que passa no lint.
 
 ## f5 · Medição de sessões e /setup para projetos existentes
 
 ### Objetivo
 
-Medir o antes e o depois a partir dos históricos que o Claude Code já grava, e migrar um projeto existente para o BetterDev. Ao final, o MDT está migrado, a linha de base das 19 sessões está calculada, e a comparação roda sozinha conforme você trabalha na migração para pywebview.
+Medir o antes e o depois a partir dos históricos que o Claude Code já grava, e migrar um projeto existente para o BuilderDev. Ao final, o MDT está migrado, a linha de base das 19 sessões está calculada, e a comparação roda sozinha conforme você trabalha na migração para pywebview.
 
 ### Escopo
 
@@ -375,28 +375,28 @@ Medir o antes e o depois a partir dos históricos que o Claude Code já grava, e
   - **tool calls até a primeira edição:** número de `tool_use` antes do primeiro `Edit`, `Write` ou `NotebookEdit`;
   - total de tool calls e duração;
   - **compactações:** do `metrics.jsonl` quando existir; senão, estimadas por queda de mais de 50% no contexto entre turnos seguidos, sempre marcadas como "estimado".
-- **`src/stats/report.ts` (`betterdev stats [--project <caminho>] [--split-at <data>] [--json]`):** tabela por sessão e medianas antes e depois da data de corte. Inclui as **ocorrências repetidas** de erros já registrados (soma de `occurrences - 1` na trilha bug) como sinal de qualidade.
-- **`src/migrate/split.ts` (`betterdev migrate split <arquivos...>`):** parte mecânica da migração. Divide `MEMORY.md` e `ERRORS.md` pelos títulos, respeitando blocos de código, em candidatos em `.dev/.local/migration/NNN.md`, cada um com origem (arquivo e intervalo de linhas). Não decide nada.
+- **`src/stats/report.ts` (`builderdev stats [--project <caminho>] [--split-at <data>] [--json]`):** tabela por sessão e medianas antes e depois da data de corte. Inclui as **ocorrências repetidas** de erros já registrados (soma de `occurrences - 1` na trilha bug) como sinal de qualidade.
+- **`src/migrate/split.ts` (`builderdev migrate split <arquivos...>`):** parte mecânica da migração. Divide `MEMORY.md` e `ERRORS.md` pelos títulos, respeitando blocos de código, em candidatos em `.dev/.local/migration/NNN.md`, cada um com origem (arquivo e intervalo de linhas). Não decide nada.
 - **`templates/CLAUDE.md`:** modelo do `.dev/CLAUDE.md` com:
   - a linha de descoberta **informativa** da §4.1 do CONCEPCAO;
   - as regras de mudança cirúrgica e de verificação (de `referencias/karpathy.md`);
   - instrução sobre o que preservar ao compactar (fase ativa, arquivos modificados, comandos de teste);
   - espaço para o conteúdo do projeto.
 - **`skills/setup/SKILL.md`** (`disable-model-invocation: true`). Receita:
-  1. `betterdev stats` para registrar a linha de base antes de qualquer mudança;
-  2. `betterdev init`;
-  3. `betterdev migrate split` nos arquivos de memória existentes;
-  4. para cada candidato, em lotes, aplicar o critério de durabilidade: **descartar**, **fundir** com outro, ou **criar entrada** via `betterdev entry new`. Registrar cada decisão em `.dev/.local/migration/decisoes.md` (candidato, decisão, motivo);
+  1. `builderdev stats` para registrar a linha de base antes de qualquer mudança;
+  2. `builderdev init`;
+  3. `builderdev migrate split` nos arquivos de memória existentes;
+  4. para cada candidato, em lotes, aplicar o critério de durabilidade: **descartar**, **fundir** com outro, ou **criar entrada** via `builderdev entry new`. Registrar cada decisão em `.dev/.local/migration/decisoes.md` (candidato, decisão, motivo);
   5. montar `.dev/CLAUDE.md` a partir do template e do `CLAUDE.md` atual, **removendo as instruções de "leia MEMORY.md/ERRORS.md"**;
   6. **pedir sua confirmação** antes de trocar o `CLAUDE.md` da raiz pelo atalho `@.dev/CLAUDE.md`;
   7. `git rm` de `MEMORY.md` e `ERRORS.md` num commit próprio; o conteúdo continua no histórico;
-  8. `betterdev lint`, `betterdev reindex` e `betterdev hooks install`;
+  8. `builderdev lint`, `builderdev reindex` e `builderdev hooks install`;
   9. relatório: quantos candidatos, quantos viraram entrada, quantos foram descartados ou fundidos, e o tamanho do contexto de abertura antes e depois.
 
 #### Interface
 
 ```
-$ betterdev stats --project ../MDT --split-at 2026-09-24
+$ builderdev stats --project ../MDT --split-at 2026-09-24
                       antes (19 sessões)   depois (5 sessões)
 tokens na abertura    38.412 (mediana)     3.180
 tool calls até editar 14                   5
@@ -414,8 +414,8 @@ erros repetidos       -                    0
 
 ### Validação visual
 
-- Antes de migrar: `betterdev stats --project C:/Users/awx1530897/Desktop/Projetos/MDT`. Conferir que aparecem 19 sessões e que os tokens de abertura estão na ordem dos ~38k esperados pelo tamanho dos arquivos. Guardar a saída.
-- No MDT, numa branch `chore/betterdev-setup`, rodar `/betterdev:setup`. Ler `decisoes.md` e conferir amostras: o que foi descartado era mesmo narrativa ou coisa recuperável do código? Aprovar a troca do `CLAUDE.md`.
+- Antes de migrar: `builderdev stats --project C:/Users/awx1530897/Desktop/Projetos/MDT`. Conferir que aparecem 19 sessões e que os tokens de abertura estão na ordem dos ~38k esperados pelo tamanho dos arquivos. Guardar a saída.
+- No MDT, numa branch `chore/builderdev-setup`, rodar `/builderdev:setup`. Ler `decisoes.md` e conferir amostras: o que foi descartado era mesmo narrativa ou coisa recuperável do código? Aprovar a troca do `CLAUDE.md`.
 - Abrir uma sessão nova no MDT e rodar `/context`: a parte de memória e instruções deve cair de ~38k para ≤ 4k tokens.
-- Fazer a primeira fase real da migração para pywebview com `/betterdev:plan`, `betterdev start` e o ciclo normal. Após ~5 sessões, rodar `betterdev stats --split-at <data da migração>` e comparar com os critérios combinados: abertura ≥ 10× menor, menos tool calls até a primeira edição, compactações iguais ou menores, e nenhum erro já registrado se repetindo.
+- Fazer a primeira fase real da migração para pywebview com `/builderdev:plan`, `builderdev start` e o ciclo normal. Após ~5 sessões, rodar `builderdev stats --split-at <data da migração>` e comparar com os critérios combinados: abertura ≥ 10× menor, menos tool calls até a primeira edição, compactações iguais ou menores, e nenhum erro já registrado se repetindo.
 - Critério de qualidade manual: nas mesmas sessões, anotar se você precisou corrigir o Claude sobre algo que estava na memória antiga. Se isso acontecer mais do que antes, algum descarte da migração foi errado; revisar `decisoes.md`.

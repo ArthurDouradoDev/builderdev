@@ -14,7 +14,7 @@ useIsolatedGit();
 let root: string;
 
 beforeEach(() => {
-  root = makeRepo('betterdev-status-');
+  root = makeRepo('builderdev-status-');
 });
 
 afterEach(() => {
@@ -211,12 +211,12 @@ describe('formatPlanStatus', { timeout: 30_000 }, () => {
   });
 });
 
-describe('betterdev status (CLI)', { timeout: 30_000 }, () => {
+describe('builderdev status (CLI)', { timeout: 30_000 }, () => {
   let cliDir: string;
   let cli: BuiltCli;
 
   beforeAll(() => {
-    cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+    cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
     cli = buildCli(cliDir);
   });
 

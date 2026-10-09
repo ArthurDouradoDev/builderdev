@@ -68,7 +68,7 @@ export function planStatus(entry: PlanEntry, steps: Map<string, string[]>, activ
   };
 }
 
-/** Tabela de um plano, no formato do `betterdev status`. */
+/** Tabela de um plano, no formato do `builderdev status`. */
 export function formatPlanStatus(status: PlanStatus): string {
   const header = status.title ? `${status.id} · ${status.title}` : status.id;
   if (status.error) return `${header}\n  erro: ${status.error}`;

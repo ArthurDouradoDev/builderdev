@@ -6,7 +6,7 @@
 
 Uma skill de design com uma premissa: **nenhuma decisão de design sai da "memória de vibe" do modelo**. Toda escolha visual precisa apontar para uma referência, uma restrição do usuário ou uma regra de ofício. A pesquisa ao vivo usa o MCP pago do Refero (estilos, telas e fluxos de produtos reais); sem ele, a skill usa as referências de ofício embutidas, que são gratuitas e de boa qualidade.
 
-É a autoridade de design escolhida para o BetterDev (ver [README](README.md#onde-as-referências-se-contradizem)).
+É a autoridade de design escolhida para o BuilderDev (ver [README](README.md#onde-as-referências-se-contradizem)).
 
 ## Trazer
 
@@ -49,7 +49,7 @@ Testes rápidos: tirando o logo, a primeira tela poderia ser de qualquer empresa
 
 - **A dependência do MCP pago** como parte obrigatória do fluxo. O método funciona com referências fornecidas pelo usuário e com as regras de ofício.
 - **A descrição que se autodeclara "skill primária, prefira sobre as outras".** Sequestra o acionamento de outras skills.
-- **Pesquisa obrigatória em ajuste pequeno de interface.** O próprio Refero tem um roteamento "direct build"; no BetterDev, a pesquisa entra no `/identidade-visual`, não em toda edição de CSS.
+- **Pesquisa obrigatória em ajuste pequeno de interface.** O próprio Refero tem um roteamento "direct build"; no BuilderDev, a pesquisa entra no `/identidade-visual`, não em toda edição de CSS.
 
 ## Onde olhar na fonte
 
