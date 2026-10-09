@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 
 export const TRAILER_KEY = 'Plan-Step';
 
@@ -20,10 +20,42 @@ export function git(args: string[], cwd: string): string {
       maxBuffer: 64 * 1024 * 1024,
     });
   } catch (err) {
-    const stderr = String((err as { stderr?: unknown }).stderr ?? '').trim();
-    const reason = stderr.split(/\r?\n/)[0]?.replace(/^fatal: /, '') || (err as Error).message;
-    throw new GitError(`git ${args[0]}: ${reason}`, args);
+    throw new GitError(`git ${args[0]}: ${gitReason(err)}`, args);
   }
+}
+
+const GIT_ASYNC_TIMEOUT_MS = 10_000;
+
+/**
+ * Como `git()`, sem bloquear: para ler vários repositórios em paralelo. Desiste depois de 10 s.
+ * `env` acrescenta variáveis ao ambiente herdado.
+ */
+export function gitAsync(args: string[], cwd: string, env?: Record<string, string>): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      'git',
+      args,
+      {
+        cwd,
+        encoding: 'utf8',
+        timeout: GIT_ASYNC_TIMEOUT_MS,
+        maxBuffer: 64 * 1024 * 1024,
+        windowsHide: true,
+        env: env && { ...process.env, ...env },
+      },
+      (err, stdout, stderr) => {
+        if (!err) return resolve(stdout);
+        const reason = err.killed ? `tempo esgotado (${GIT_ASYNC_TIMEOUT_MS / 1000} s)` : gitReason({ stderr, message: err.message });
+        reject(new GitError(`git ${args[0]}: ${reason}`, args));
+      },
+    );
+  });
+}
+
+/** Primeira linha do stderr, sem o `fatal: `; a mensagem do erro quando o stderr vem vazio. */
+function gitReason(err: unknown): string {
+  const stderr = String((err as { stderr?: unknown }).stderr ?? '').trim();
+  return stderr.split(/\r?\n/)[0]?.replace(/^fatal: /, '') || (err as Error).message;
 }
 
 /** Verdadeiro quando `HEAD` aponta para um commit (falso em repositório recém-criado). */
