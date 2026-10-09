@@ -91,7 +91,7 @@ describe('splitFiles', () => {
   let root: string;
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'betterdev-split-'));
+    root = mkdtempSync(join(tmpdir(), 'builderdev-split-'));
     mkdirSync(join(root, '.dev'));
     writeFileSync(join(root, 'MEMORY.md'), MEMORY);
     writeFileSync(join(root, 'ERRORS.md'), '# Erros\n\n## Janela travada\n\nUsar a thread principal.\n');
@@ -123,13 +123,13 @@ describe('splitFiles', () => {
   });
 });
 
-describe('betterdev migrate split', { timeout: 30_000 }, () => {
+describe('builderdev migrate split', { timeout: 30_000 }, () => {
   let cliDir: string;
   let cli: BuiltCli;
   let root: string;
 
   beforeAll(() => {
-    cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+    cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
     cli = buildCli(cliDir);
   });
 
@@ -138,7 +138,7 @@ describe('betterdev migrate split', { timeout: 30_000 }, () => {
   });
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'betterdev-splitcli-'));
+    root = mkdtempSync(join(tmpdir(), 'builderdev-splitcli-'));
     writeFileSync(join(root, 'MEMORY.md'), MEMORY);
   });
 

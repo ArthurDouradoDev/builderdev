@@ -1,4 +1,4 @@
-# BetterDev — Documento de concepção
+# BuilderDev — Documento de concepção
 
 **Data:** 22/09/2026 · **Revisão 1:** 22/09/2026, após análise das referências (ver [`referencias/`](referencias/README.md))
 **Escopo:** dois projetos irmãos — um plugin de fluxo de desenvolvimento com IA e uma plataforma de visualização desse fluxo.
@@ -91,7 +91,7 @@ phases:
 ---
 ```
 
-Não há `status` nem hash de commit. As duas referências maduras (compound e superpowers) proíbem estado mutável dentro do plano: ele deriva e diverge. No BetterDev há um motivo a mais — colaboração via git, e dois devs movendo `status:` no mesmo YAML é conflito de merge.
+Não há `status` nem hash de commit. As duas referências maduras (compound e superpowers) proíbem estado mutável dentro do plano: ele deriva e diverge. No BuilderDev há um motivo a mais — colaboração via git, e dois devs movendo `status:` no mesmo YAML é conflito de merge.
 
 `needs:` é opcional. O caso comum (fases em sequência) não declara nada e a UI desenha uma cadeia; bifurcações aparecem só quando declaradas. `needs:` continua sendo o que separa isso de um Trello: bloqueio explícito e caminho crítico saem de graça.
 
@@ -113,7 +113,7 @@ Títulos fixos, em ordem fixa, derivados do prompt de planejamento que já funci
 ### Validação visual        checklist de instruções para o humano
 ```
 
-Um script (`betterdev lint`) valida a correspondência YAML ↔ corpo: mesmos ids, mesmos títulos, seções obrigatórias presentes. Plano de fase única usa a mesma estrutura com `f1`. Tarefa trivial ("se dá para descrever o diff em uma frase") não gera plano.
+Um script (`builderdev lint`) valida a correspondência YAML ↔ corpo: mesmos ids, mesmos títulos, seções obrigatórias presentes. Plano de fase única usa a mesma estrutura com `f1`. Tarefa trivial ("se dá para descrever o diff em uma frase") não gera plano.
 
 ### 3.3 Status derivado
 
@@ -121,7 +121,7 @@ Um script (`betterdev lint`) valida a correspondência YAML ↔ corpo: mesmos id
 |---|---|
 | Pendente | nenhum commit com `Plan-Step: <plano>/<fase>` |
 | Bloqueada | alguma fase em `needs` (ou a anterior) sem commit |
-| Ativa | `betterdev start f2` grava estado local, gitignored; o hook `SessionStart` injeta na sessão |
+| Ativa | `builderdev start f2` grava estado local, gitignored; o hook `SessionStart` injeta na sessão |
 | Concluída | existe commit com o trailer da fase |
 
 A validação visual acontece **antes** do commit; o commit é a confirmação. O checklist é instrução, não estado.
@@ -157,13 +157,13 @@ CLAUDE.md / AGENTS.md    shim de 1–3 linhas: @.dev/CLAUDE.md (hosts não leem 
 
 **Frontmatter das entradas** (adaptado do compound): `track` (conhecimento | bug), `type` de um enum fechado, `module`, `summary` (uma linha; vira a linha do índice), `tags` (máx 8, vocabulário do próprio corpus), `applies_when`, `created`, `updated`. Bugs exigem também `symptoms`, `root_cause`, `resolution` e `occurrences` (incrementado quando o mesmo erro volta, em vez de criar entrada nova). O enum fechado e a regra "reusar o valor que o corpus já usa" resolvem a degradação por tag livre.
 
-**Índices gerados:** `betterdev reindex` monta `index.md` a partir do frontmatter, e o hook de sessão regenera a cada abertura. Ninguém edita e o arquivo fica fora do git, então não apodrece nem gera conflito de merge.
+**Índices gerados:** `builderdev reindex` monta `index.md` a partir do frontmatter, e o hook de sessão regenera a cada abertura. Ninguém edita e o arquivo fica fora do git, então não apodrece nem gera conflito de merge.
 
 **Abertura de sessão:** `CLAUDE.md` + estado injetado pelo hook + os dois `index.md` ≈ **3k tokens**, no lugar dos 33–71k atuais. O resto entra sob demanda.
 
 **Linha de descoberta no `CLAUDE.md` — informativa, não imperativa.** "`.dev/memory/` e `.dev/errors/`: aprendizados do projeto com frontmatter (module, tags); relevantes ao implementar ou depurar áreas documentadas." Nunca "sempre leia antes de começar": o compound mediu que a forma imperativa causa leituras redundantes — é o defeito do `atlas/CLAUDE.md` hoje.
 
-**Sobreposição com a memória nativa.** O Claude Code já tem memória automática (índice + um fato por arquivo, por usuário, fora do repo). O BetterDev se diferencia por viver no repo, ser compartilhado via git, portável entre hosts e visualizável. O `/setup` deve orientar a não duplicar conteúdo entre as duas.
+**Sobreposição com a memória nativa.** O Claude Code já tem memória automática (índice + um fato por arquivo, por usuário, fora do repo). O BuilderDev se diferencia por viver no repo, ser compartilhado via git, portável entre hosts e visualizável. O `/setup` deve orientar a não duplicar conteúdo entre as duas.
 
 ### 4.2 Portabilidade entre IAs
 
@@ -173,7 +173,7 @@ O cenário mudou desde a primeira versão (fonte: manifestos do compound e do su
 - Segundo o README do compound, o Gemini CLI de consumo foi substituído pelo **Antigravity CLI (`agy`)**, que lê `GEMINI.md`.
 - O custo real de portabilidade está no **formato de saída dos hooks**: o `session-start` do superpowers emite JSON diferente para Claude Code, Cursor e Copilot.
 
-**Abordagem revisada:** `.dev/` continua neutro e canônico; toda a inteligência fica em markdown neutro e em scripts. Em vez de um gerador `betterdev sync` por host, o plugin publica manifestos nativos no próprio repo (como fazem as referências) e um único script de hook com saída por host.
+**Abordagem revisada:** `.dev/` continua neutro e canônico; toda a inteligência fica em markdown neutro e em scripts. Em vez de um gerador `builderdev sync` por host, o plugin publica manifestos nativos no próprio repo (como fazem as referências) e um único script de hook com saída por host.
 
 > ⚠️ **A verificar** na documentação atual de cada host antes de virar decisão: formatos de manifesto, eventos de hook disponíveis e a substituição Gemini CLI → `agy`.
 
@@ -225,7 +225,7 @@ Em ordem de impacto, para o caso medido na seção 1:
 4. **Respeitar o cache de prompt.** O prefixo (system + `CLAUDE.md`) só é barato enquanto não muda; reescrevê-lo no meio da sessão invalida o cache inteiro. Daí a regra: **arquivo auto-carregado é imutável durante a sessão**; escrita vai para `.local/` e `memory/`, lidos sob demanda.
 5. **Disciplina de subagente.** Só compensa quando o input é grande e o output é pequeno (varredura → conclusão). Regra prática: só spawna se a leitura esperada passa de ~20k tokens e a resposta cabe em 1k. Ao delegar, **passe caminhos, não conteúdo**. É o oposto dos plugins de quinze subagentes — o superpowers mede ~US$13 por execução com um subagente por tarefa.
 6. **Contexto escopado por fase.** Garantido pelo campo `files:` e pela extração do bloco da fase ativa.
-7. **Orçamento de tamanho versionado.** `index.md` ≤ 200 linhas, entrada ≤ 40 linhas, `CLAUDE.md` ≤ 150 linhas, corpo de skill ≤ 8 KB; o script do `/wrap` e o `betterdev lint` falham se estourar. Sem isso, o sistema regride ao estado atual em três meses.
+7. **Orçamento de tamanho versionado.** `index.md` ≤ 200 linhas, entrada ≤ 40 linhas, `CLAUDE.md` ≤ 150 linhas, corpo de skill ≤ 8 KB; o script do `/wrap` e o `builderdev lint` falham se estourar. Sem isso, o sistema regride ao estado atual em três meses.
 8. **Roteamento de modelo: barateie mecânica, nunca julgamento.** Regenerar índice, validar formato e montar changelog vão para script ou modelo barato. Decidir o que vira memória, calibrar severidade e revisar ficam no modelo da sessão. Evidência: no superpowers, revisores baratos sinalizaram corretamente 0 de 10 defeitos plantados e defenderam os defeitos. Níveis nomeados semanticamente (extração / geração / teto), sem nome de modelo fixo no texto.
 9. **Medição.** Hook que loga tokens por arquivo lido e resultados do `verify`. Sem número, a otimização é no escuro — e é essa métrica que alimenta a view de atividade dos agentes, se ela existir. Medir também **qualidade**, não só tokens: modelos fortes mascaram mudanças de prompt, e economizar tokens piorando o resultado passa despercebido.
 
@@ -242,14 +242,14 @@ Consequência de projeto: a UI define o formato. Cada seção fixa do plano (§3
 ### 6.2 Arquitetura
 
 ```
-betterdev watch  →  fs.watch em .dev/ + git log  →  parse  →  SQLite local (gitignored)
+builderdev watch  →  fs.watch em .dev/ + git log  →  parse  →  SQLite local (gitignored)
                                                                      ↓
                                                              UI web em localhost
                                                                      ↓
                                                    ação do usuário → escreve .md → git
 ```
 
-O SQLite é **cache puro, 100% reconstruível dos arquivos e do git** (`betterdev reindex`), incluindo o status derivado das fases.
+O SQLite é **cache puro, 100% reconstruível dos arquivos e do git** (`builderdev reindex`), incluindo o status derivado das fases.
 
 Isso elimina o risco clássico do modelo híbrido: não existe reconciliação, porque o banco nunca é fonte de nada. A IA edita o arquivo direto e o board acompanha — que é exatamente o comportamento necessário.
 
@@ -287,10 +287,10 @@ Mapeada a partir da awesome-list (detalhes em `referencias/concorrentes.md`): **
 
 ## 7. Ordem de construção
 
-1. **Formato de plano + template + `betterdev lint` + `/plan`.** É o contrato entre os dois projetos; tudo depende dele. Validar o template reescrevendo 2–3 planos reais já existentes.
-2. **Migração do MDT** *(o `atlas` está pausado)*. Quebrar `MEMORY.md`/`ERRORS.md` em entradas com frontmatter, aplicando o critério de durabilidade (espera-se descartar boa parte), e gerar os índices por script. **Medir o antes/depois** com `betterdev stats`, que lê os históricos de sessão já gravados pelo Claude Code (19 sessões do MDT como linha de base). Critérios combinados em 22/09/2026: tokens na abertura ≥ 10× menores (~38k → ≤ 4k), menos tool calls até a primeira edição útil, compactações iguais ou menores, e nenhum erro já registrado se repetindo. A migração do MDT para pywebview é o uso real que alimenta a comparação. Se o número não aparecer aqui, a tese está errada — e é melhor descobrir agora.
+1. **Formato de plano + template + `builderdev lint` + `/plan`.** É o contrato entre os dois projetos; tudo depende dele. Validar o template reescrevendo 2–3 planos reais já existentes.
+2. **Migração do MDT** *(o `atlas` está pausado)*. Quebrar `MEMORY.md`/`ERRORS.md` em entradas com frontmatter, aplicando o critério de durabilidade (espera-se descartar boa parte), e gerar os índices por script. **Medir o antes/depois** com `builderdev stats`, que lê os históricos de sessão já gravados pelo Claude Code (19 sessões do MDT como linha de base). Critérios combinados em 22/09/2026: tokens na abertura ≥ 10× menores (~38k → ≤ 4k), menos tool calls até a primeira edição útil, compactações iguais ou menores, e nenhum erro já registrado se repetindo. A migração do MDT para pywebview é o uso real que alimenta a comparação. Se o número não aparecer aqui, a tese está errada — e é melhor descobrir agora.
 3. **Hooks + `/wrap`.** `SessionStart` (com reinjeção após compactação), `Stop` rodando `verify`, `prepare-commit-msg` com trailer. Fecha o ciclo: o sistema passa a se manter sozinho.
-4. **`betterdev watch` + view de fluxo.** Só depois de existirem planos reais, com commits reais, para renderizar.
+4. **`builderdev watch` + view de fluxo.** Só depois de existirem planos reais, com commits reais, para renderizar.
 5. **`/refresh`.** Quando o corpus migrado tiver algumas semanas de uso.
 
 O passo 2 é o teste da hipótese inteira e pode ser feito imediatamente.

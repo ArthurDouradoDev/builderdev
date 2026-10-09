@@ -3,21 +3,21 @@ import { join, relative, resolve, sep } from 'node:path';
 import { git } from './log';
 
 export const HOOK_NAME = 'prepare-commit-msg';
-const BEGIN = '# betterdev:inicio';
-const END = '# betterdev:fim';
+const BEGIN = '# builderdev:inicio';
+const END = '# builderdev:fim';
 const SHEBANG = '#!/bin/sh';
 
 /**
- * Bloco instalado no hook. Só age se `betterdev` estiver no PATH e nunca bloqueia o commit:
- * ignora a falha do betterdev e devolve o código de saída do que veio antes no arquivo.
+ * Bloco instalado no hook. Só age se `builderdev` estiver no PATH e nunca bloqueia o commit:
+ * ignora a falha do builderdev e devolve o código de saída do que veio antes no arquivo.
  */
 export const HOOK_BLOCK = [
-  `${BEGIN} · gerado por "betterdev hooks install"; remova com "betterdev hooks uninstall"`,
-  'betterdev_status=$?',
-  'if command -v betterdev >/dev/null 2>&1; then',
-  '  betterdev commit-msg "$1" "$2" || true',
+  `${BEGIN} · gerado por "builderdev hooks install"; remova com "builderdev hooks uninstall"`,
+  'builderdev_status=$?',
+  'if command -v builderdev >/dev/null 2>&1; then',
+  '  builderdev commit-msg "$1" "$2" || true',
   'fi',
-  '(exit "$betterdev_status")',
+  '(exit "$builderdev_status")',
   END,
 ].join('\n');
 
@@ -35,7 +35,7 @@ export interface HookResult {
 }
 
 /**
- * Hook ausente: cria. Hook com o bloco do betterdev: atualiza o bloco. Hook de outra ferramenta:
+ * Hook ausente: cria. Hook com o bloco do builderdev: atualiza o bloco. Hook de outra ferramenta:
  * salva `<hook>.bak` e acrescenta o bloco no final.
  */
 export function installHook(cwd: string): HookResult {
@@ -67,7 +67,7 @@ export function installHook(cwd: string): HookResult {
 }
 
 /**
- * Remove só o bloco do betterdev. Se o hook era só o bloco, apaga o arquivo; se sobra exatamente
+ * Remove só o bloco do builderdev. Se o hook era só o bloco, apaga o arquivo; se sobra exatamente
  * o hook alheio guardado no `.bak`, restaura-o byte a byte e apaga a cópia.
  */
 export function uninstallHook(cwd: string): HookResult {
@@ -102,7 +102,7 @@ export function uninstallHook(cwd: string): HookResult {
   return { action: 'bloco removido', path };
 }
 
-/** Intervalo do bloco no texto: do início da linha `# betterdev:inicio` até o fim da linha `# betterdev:fim`. */
+/** Intervalo do bloco no texto: do início da linha `# builderdev:inicio` até o fim da linha `# builderdev:fim`. */
 function findBlock(text: string): { start: number; end: number } | null {
   const begin = new RegExp(`^${BEGIN}.*$`, 'm').exec(text);
   if (!begin) return null;

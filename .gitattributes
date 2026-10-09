@@ -1,2 +1,2 @@
 # Script sh executado pelo Claude Code (Git Bash no Windows): CRLF quebraria o shebang.
-bin/betterdev text eol=lf
+bin/builderdev text eol=lf

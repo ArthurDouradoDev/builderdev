@@ -7,7 +7,7 @@ import { buildSync } from 'esbuild';
 export interface BuiltCli {
   /** Bundle do `src/cli.ts` atual. */
   script: string;
-  /** Pasta com um `betterdev` executável, para pôr no PATH do git hook. */
+  /** Pasta com um `builderdev` executável, para pôr no PATH do git hook. */
   binDir: string;
 }
 
@@ -29,7 +29,7 @@ export function buildCli(dir: string): BuiltCli {
   });
   const binDir = join(dir, 'bin');
   mkdirSync(binDir, { recursive: true });
-  const shim = join(binDir, 'betterdev');
+  const shim = join(binDir, 'builderdev');
   const posix = (p: string) => p.replace(/\\/g, '/');
   writeFileSync(shim, `#!/bin/sh\nexec "${posix(process.execPath)}" "${posix(script)}" "$@"\n`);
   chmodSync(shim, 0o755);
@@ -48,7 +48,7 @@ export function runCli(cli: BuiltCli, cwd: string, ...args: string[]): RunResult
 }
 
 /**
- * Roda `betterdev hook <evento>` como o Claude Code: o JSON do evento no stdin.
+ * Roda `builderdev hook <evento>` como o Claude Code: o JSON do evento no stdin.
  * Sem `CLAUDE_PROJECT_DIR` herdado, para que uma sessão do Claude Code rodando os testes não aponte para este repositório.
  */
 export function runHook(cli: BuiltCli, cwd: string, event: string, input: unknown): RunResult {
@@ -60,14 +60,14 @@ export function runHook(cli: BuiltCli, cwd: string, event: string, input: unknow
 }
 
 /**
- * Roda o git com o `betterdev` do bundle no PATH, como numa máquina com `npm link`.
- * Com `cli` nulo, tira do PATH qualquer `betterdev` instalado, para simular a máquina sem ele.
+ * Roda o git com o `builderdev` do bundle no PATH, como numa máquina com `npm link`.
+ * Com `cli` nulo, tira do PATH qualquer `builderdev` instalado, para simular a máquina sem ele.
  */
 export function gitWithCli(cli: BuiltCli | null, cwd: string, ...args: string[]): RunResult {
   const dirs = (process.env.PATH ?? '').split(delimiter).filter(Boolean);
   const path = cli
     ? [cli.binDir, ...dirs]
-    : dirs.filter((d) => !existsSync(join(d, 'betterdev')) && !existsSync(join(d, 'betterdev.exe')));
+    : dirs.filter((d) => !existsSync(join(d, 'builderdev')) && !existsSync(join(d, 'builderdev.exe')));
   // No Windows a chave costuma ser `Path`; gravar outra grafia criaria duas variáveis.
   const env = { ...process.env };
   const key = Object.keys(env).find((k) => k.toUpperCase() === 'PATH') ?? 'PATH';

@@ -74,7 +74,7 @@ describe('skills/recall/SKILL.md', () => {
     expect(Buffer.byteLength(skill)).toBeLessThanOrEqual(8 * 1024);
     expect(skill).toMatch(/^---\nname: recall\ndescription: .+/);
     expect(skill).not.toContain('disable-model-invocation');
-    const steps = ['betterdev recall', 'Leia por completo só o que é relevante', 'contradiz o código'].map((s) => skill.indexOf(s));
+    const steps = ['builderdev recall', 'Leia por completo só o que é relevante', 'contradiz o código'].map((s) => skill.indexOf(s));
     expect(steps.every((i) => i > 0)).toBe(true);
     expect([...steps].sort((a, b) => a - b)).toEqual(steps);
   });

@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Transforma a conversa atual num plano de implementação por fases em .dev/plans/, no formato do BetterDev, validado por betterdev lint.
+description: Transforma a conversa atual num plano de implementação por fases em .dev/plans/, no formato do BuilderDev, validado por builderdev lint.
 disable-model-invocation: true
 argument-hint: "[foco ou restrição adicional]"
 ---
@@ -43,10 +43,10 @@ O plano pronto tem:
 
 ## 4. Grave o arquivo
 
-Grave em `.dev/plans/<id>.md`. Se a pasta `.dev/` não existir, rode `betterdev init` antes. Se já existir um plano com esse id, escolha outro id ou pergunte antes de sobrescrever.
+Grave em `.dev/plans/<id>.md`. Se a pasta `.dev/` não existir, rode `builderdev init` antes. Se já existir um plano com esse id, escolha outro id ou pergunte antes de sobrescrever.
 
 ## 5. Valide com o lint
 
-Rode `betterdev lint .dev/plans/<id>.md`. Corrija cada erro apontado e rode de novo, até a última linha mostrar `0 erros`. Corrija também os avisos, a menos que haja motivo claro para mantê-los.
+Rode `builderdev lint .dev/plans/<id>.md`. Corrija cada erro apontado e rode de novo, até a última linha mostrar `0 erros`. Corrija também os avisos, a menos que haja motivo claro para mantê-los.
 
 Termine respondendo com o caminho do arquivo e a lista de fases (`id · título`), uma por linha.

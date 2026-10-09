@@ -47,7 +47,7 @@ export interface StartResult {
 }
 
 /**
- * `betterdev start <plano>/<fase>`: valida que a fase existe e grava o estado.
+ * `builderdev start <plano>/<fase>`: valida que a fase existe e grava o estado.
  * Fase bloqueada só é ativada com `force`; fase já concluída é ativada com aviso.
  */
 export function startPhase(root: string, ref: string, { force = false, now = new Date() } = {}): StartResult {

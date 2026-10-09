@@ -9,7 +9,7 @@ const IGNORED = '.dev/.local/\n.dev/memory/index.md\n.dev/errors/index.md\n';
 let root: string;
 
 beforeEach(() => {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-init-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-init-'));
 });
 
 afterEach(() => {

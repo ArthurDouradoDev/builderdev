@@ -26,7 +26,7 @@ export function useIsolatedGit(): void {
   let dir = '';
   beforeAll(() => {
     for (const key of GIT_ENV_KEYS) saved[key] = process.env[key];
-    dir = mkdtempSync(join(tmpdir(), 'betterdev-gitconfig-'));
+    dir = mkdtempSync(join(tmpdir(), 'builderdev-gitconfig-'));
     const config = join(dir, 'gitconfig');
     writeFileSync(config, '');
     delete process.env.GIT_DIR;
@@ -56,7 +56,7 @@ export function git(cwd: string, ...args: string[]): string {
 }
 
 /** Repositório novo, na branch `main`, sem commits. */
-export function makeRepo(prefix = 'betterdev-repo-'): string {
+export function makeRepo(prefix = 'builderdev-repo-'): string {
   const root = mkdtempSync(join(tmpdir(), prefix));
   git(root, 'init', '-q', '-b', 'main');
   return root;
@@ -81,7 +81,7 @@ export interface PhaseSpec {
   verify?: string[];
 }
 
-/** Plano válido para o `betterdev lint`. Cada fase tem a frase "Texto exclusivo da <id>" no corpo. */
+/** Plano válido para o `builderdev lint`. Cada fase tem a frase "Texto exclusivo da <id>" no corpo. */
 export function planSource(id: string, phases: PhaseSpec[]): string {
   const title = (p: PhaseSpec) => p.title ?? `Fase ${p.id}`;
   const yaml = phases.flatMap((p) => [

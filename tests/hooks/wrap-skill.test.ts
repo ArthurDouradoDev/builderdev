@@ -27,9 +27,9 @@ describe('skills/wrap/SKILL.md', () => {
   });
 
   it('valida e reindexa pelo script', () => {
-    expect(text).toContain('betterdev entry new');
-    expect(text).toContain('betterdev lint');
-    expect(text).toContain('betterdev reindex');
+    expect(text).toContain('builderdev entry new');
+    expect(text).toContain('builderdev lint');
+    expect(text).toContain('builderdev reindex');
     expect(text).toContain('incremente `occurrences`');
   });
 });

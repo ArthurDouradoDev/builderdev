@@ -1,5 +1,5 @@
 {
-  "description": "BetterDev: injeta o estado do projeto na sessão, roda o verify da fase ativa no fim do turno e conta compactações. Inerte fora de projetos com .dev/.",
+  "description": "BuilderDev: injeta o estado do projeto na sessão, roda o verify da fase ativa no fim do turno e conta compactações. Inerte fora de projetos com .dev/.",
   "hooks": {
     "SessionStart": [
       {
@@ -22,7 +22,7 @@
             "command": "node",
             "args": ["${CLAUDE_PLUGIN_ROOT}/dist/cli.js", "hook", "stop"],
             "timeout": 300,
-            "statusMessage": "betterdev: verificando a fase ativa"
+            "statusMessage": "builderdev: verificando a fase ativa"
           }
         ]
       }

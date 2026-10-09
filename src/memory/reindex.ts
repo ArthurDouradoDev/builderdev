@@ -2,7 +2,7 @@ import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { EntryParseError, INDEX_FILE, TRACKS, TRACK_DIRS, entryFields, listEntryFiles, readEntry, type Entry, type Track } from './schema';
 
-export const INDEX_HEADER = '<!-- GERADO por betterdev reindex; não editar -->';
+export const INDEX_HEADER = '<!-- GERADO por builderdev reindex; não editar -->';
 export const INDEX_MAX_LINES = 200;
 const INDEX_TITLES: Record<Track, string> = { conhecimento: 'Memória', bug: 'Erros' };
 

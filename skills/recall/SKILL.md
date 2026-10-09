@@ -17,14 +17,14 @@ Tire os termos do tema e do que está em jogo agora: o `module` e as tags que os
 ## 2. Rode a busca
 
 ```bash
-betterdev recall <termo1> <termo2> ...
+builderdev recall <termo1> <termo2> ...
 ```
 
 A saída lista até 5 entradas com caminho, `summary` e os campos que coincidiram (`tags`, `module`, `applies_when`, `summary`, título, `symptoms`, do mais forte para o mais fraco). Se vier `nenhuma entrada coincide`, tente uma vez com sinônimos ou com tags vistas no índice. Se continuar vazio, responda que não há nada registrado sobre o tema e siga o trabalho.
 
 ## 3. Leia por completo só o que é relevante
 
-Decida pelo `summary` e pelos campos coincidentes. Abra com Read no máximo 3 entradas, só as que tratam do problema atual; as demais ficam de fora. Para ler as 3 primeiras de uma vez, use `betterdev recall <termos> --full`.
+Decida pelo `summary` e pelos campos coincidentes. Abra com Read no máximo 3 entradas, só as que tratam do problema atual; as demais ficam de fora. Para ler as 3 primeiras de uma vez, use `builderdev recall <termos> --full`.
 
 ## 4. Confira a entrada contra o código atual
 

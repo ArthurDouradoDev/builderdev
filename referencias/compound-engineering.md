@@ -4,11 +4,11 @@
 
 ## O que é
 
-Plugin com 36 skills, suportando 14 hosts, construído em torno de um ciclo: brainstorm → plano → execução → simplificação → revisão → **"compound"** (registrar o aprendizado onde a próxima execução vai encontrá-lo). A estratégia deles chama a camada de memória de *knowledge substrate*: é exatamente o Projeto 1 do BetterDev. É a referência mais próxima, e também o exemplo do "plugin caro" que o BetterDev quer superar.
+Plugin com 36 skills, suportando 14 hosts, construído em torno de um ciclo: brainstorm → plano → execução → simplificação → revisão → **"compound"** (registrar o aprendizado onde a próxima execução vai encontrá-lo). A estratégia deles chama a camada de memória de *knowledge substrate*: é exatamente o Projeto 1 do BuilderDev. É a referência mais próxima, e também o exemplo do "plugin caro" que o BuilderDev quer superar.
 
 ## Trazer
 
-| Ideia | Como funciona | Destino no BetterDev |
+| Ideia | Como funciona | Destino no BuilderDev |
 |---|---|---|
 | **Critério de durabilidade** | Uma entrada só entra na memória se guardar raciocínio que não é recuperável do código, dos testes, dos comentários ou de outra doc. Teste contrafactual: se ela sumisse, alguém lendo a implementação final repetiria o erro ou refaria uma investigação grande? Esforço, tamanho do diff e "a tarefa terminou" não contam. Se não passa, não escreve nada. | `/wrap` (§4.3) |
 | **Uma entrada por execução** | Uma sessão que produziu vários aprendizados gera várias execuções, nunca um lote. | `/wrap` |
@@ -26,9 +26,9 @@ Plugin com 36 skills, suportando 14 hosts, construído em torno de um ciclo: bra
 
 ## Não trazer
 
-- **A escala.** 36 skills, 14 hosts, painéis de revisores com várias personas, execução cross-model com um runner Python de ~104 KB. É a complexidade que o BetterDev se propõe a evitar.
+- **A escala.** 36 skills, 14 hosts, painéis de revisores com várias personas, execução cross-model com um runner Python de ~104 KB. É a complexidade que o BuilderDev se propõe a evitar.
 - **Referências gigantes.** O `/ce-plan` tem arquivos de referência de 30–44 KB. A economia do corpo pequeno se perde se o modelo lê tudo de uma vez (ver medições).
-- **Imposição só por prosa.** O plugin não tem nenhum hook (só fixtures de teste). O diferencial do BetterDev é justamente o contrário.
+- **Imposição só por prosa.** O plugin não tem nenhum hook (só fixtures de teste). O diferencial do BuilderDev é justamente o contrário.
 - **O vocabulário do `CONCEPTS.md` inteiro.** É um glossário denso ("outcome spine", "proxy rule", "case accretion"…). Útil para entender o raciocínio deles, ruim para importar.
 
 ## Medições citadas (alegações da fonte)

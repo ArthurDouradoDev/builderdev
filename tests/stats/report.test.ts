@@ -19,7 +19,7 @@ let configDir: string;
 let projectsDir: string;
 
 beforeAll(() => {
-  cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+  cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
   cli = buildCli(cliDir);
 });
 
@@ -28,7 +28,7 @@ afterAll(() => {
 });
 
 beforeEach(() => {
-  tmp = mkdtempSync(join(tmpdir(), 'betterdev-report-'));
+  tmp = mkdtempSync(join(tmpdir(), 'builderdev-report-'));
   project = join(tmp, 'projeto');
   configDir = join(tmp, 'claude');
   projectsDir = join(configDir, 'projects');
@@ -40,7 +40,7 @@ afterEach(() => {
   rmSync(tmp, { recursive: true, force: true });
 });
 
-/** `betterdev stats` com os históricos em `$CLAUDE_CONFIG_DIR/projects`. */
+/** `builderdev stats` com os históricos em `$CLAUDE_CONFIG_DIR/projects`. */
 function stats(...args: string[]) {
   const r = spawnSync(process.execPath, [cli.script, 'stats', ...args], {
     cwd: project,
@@ -132,7 +132,7 @@ describe('buildReport', () => {
   });
 });
 
-describe('betterdev stats', { timeout: 30_000 }, () => {
+describe('builderdev stats', { timeout: 30_000 }, () => {
   it('--json é estável entre execuções', () => {
     const first = stats('--split-at', '2026-09-24', '--json');
     const second = stats('--split-at', '2026-09-24', '--json');

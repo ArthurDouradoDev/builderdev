@@ -18,7 +18,7 @@ let cli: BuiltCli;
 let root: string;
 
 beforeAll(() => {
-  cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+  cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
   cli = buildCli(cliDir);
 });
 
@@ -35,8 +35,8 @@ const PHASES = [
   { id: 'f2', title: 'Segunda', files: ['src/f2.ts', 'tests/f2/'], verify: ['npm run typecheck', 'npx vitest run tests/f2'] },
 ];
 
-/** Projeto BetterDev com plano, f1 concluída, f2 ativa, 2 entradas em cada trilha e uma mudança não commitada. */
-function setupProject(prefix = 'betterdev-session-'): string {
+/** Projeto BuilderDev com plano, f1 concluída, f2 ativa, 2 entradas em cada trilha e uma mudança não commitada. */
+function setupProject(prefix = 'builderdev-session-'): string {
   const dir = makeRepo(prefix);
   init(dir);
   writePlan(dir, 'demo', planSource('demo', PHASES));
@@ -75,11 +75,11 @@ describe('hook SessionStart', { timeout: 30_000 }, () => {
 
     const lines = output.hookSpecificOutput.additionalContext.split('\n');
     expect(lines.slice(0, 5)).toEqual([
-      '[betterdev] branch main · fase ativa demo/f2 - Segunda',
+      '[builderdev] branch main · fase ativa demo/f2 - Segunda',
       'Objetivo: Texto exclusivo da f2.',
       'Arquivos: src/f2.ts, tests/f2/',
       'Verificação: npm run typecheck · npx vitest run tests/f2',
-      'Detalhes da fase: betterdev brief',
+      'Detalhes da fase: builderdev brief',
     ]);
     expect(lines[5]).toBe('Últimos commits:');
     expect(lines[6]).toMatch(/^ {2}[0-9a-f]{7,} feat: primeira fase$/);
@@ -113,7 +113,7 @@ describe('hook SessionStart', { timeout: 30_000 }, () => {
 
     const context = sessionStart(root, { source: 'clear' }).context;
 
-    expect(context.split('\n')[0]).toBe('[betterdev] branch main · nenhuma fase ativa (planos: betterdev status)');
+    expect(context.split('\n')[0]).toBe('[builderdev] branch main · nenhuma fase ativa (planos: builderdev status)');
     expect(context).not.toContain('Objetivo:');
     expect(context).toContain('Últimos commits:');
     expect(context).toContain('Erros (2 entradas, .dev/errors/index.md):');
@@ -144,10 +144,10 @@ describe('hook SessionStart', { timeout: 30_000 }, () => {
     expect(lines[diffAt + 1]).toBe('  [+10 linhas: git diff --stat]');
     // Índice de memória (o mais longo) cortado com marcador; o de erros, inteiro.
     const memoryAt = lines.indexOf('Memória (82 entradas, .dev/memory/index.md):');
-    const marker = lines.findIndex((l) => /^ {2}\[\+\d+ linhas: betterdev reindex\]$/.test(l));
+    const marker = lines.findIndex((l) => /^ {2}\[\+\d+ linhas: builderdev reindex\]$/.test(l));
     expect(marker).toBeGreaterThan(memoryAt + 1);
     const shown = marker - memoryAt - 1;
-    expect(lines[marker]).toBe(`  [+${82 - shown} linhas: betterdev reindex]`);
+    expect(lines[marker]).toBe(`  [+${82 - shown} linhas: builderdev reindex]`);
     const errorsAt = lines.indexOf('Erros (2 entradas, .dev/errors/index.md):');
     expect(lines.slice(errorsAt + 1)).toHaveLength(2);
     // O corte para assim que cabe: uma linha a mais passaria do teto.
@@ -155,9 +155,9 @@ describe('hook SessionStart', { timeout: 30_000 }, () => {
   });
 });
 
-describe('hook SessionStart fora de projeto BetterDev e com espaço no caminho', { timeout: 30_000 }, () => {
+describe('hook SessionStart fora de projeto BuilderDev e com espaço no caminho', { timeout: 30_000 }, () => {
   it('projeto sem .dev/ não produz saída nem arquivos', () => {
-    root = makeRepo('betterdev-sem-dev-');
+    root = makeRepo('builderdev-sem-dev-');
     commit(root, 'chore: inicial');
 
     const result = runHook(cli, root, 'session-start', { cwd: root, hook_event_name: 'SessionStart', source: 'startup' });
@@ -167,13 +167,13 @@ describe('hook SessionStart fora de projeto BetterDev e com espaço no caminho',
   });
 
   it('caminho com espaço funciona de ponta a ponta', () => {
-    root = setupProject('betterdev com espaço-');
+    root = setupProject('builderdev com espaço-');
 
     const result = runHook(cli, join(root, 'src'), 'session-start', { cwd: join(root, 'src'), hook_event_name: 'SessionStart', source: 'resume' });
 
     expect(result.status).toBe(0);
     const context = (JSON.parse(result.stdout) as { hookSpecificOutput: { additionalContext: string } }).hookSpecificOutput.additionalContext;
-    expect(context.split('\n')[0]).toBe('[betterdev] branch main · fase ativa demo/f2 - Segunda');
+    expect(context.split('\n')[0]).toBe('[builderdev] branch main · fase ativa demo/f2 - Segunda');
     expect(metrics(root)).toHaveLength(1);
   });
 

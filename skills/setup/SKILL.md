@@ -1,22 +1,22 @@
 ---
 name: setup
-description: Migra um projeto existente para o BetterDev. Mede a linha de base das sessões, cria .dev/, divide MEMORY.md e ERRORS.md em candidatos, decide cada um pelo critério de durabilidade e monta o .dev/CLAUDE.md, pedindo confirmação antes de trocar o CLAUDE.md da raiz.
+description: Migra um projeto existente para o BuilderDev. Mede a linha de base das sessões, cria .dev/, divide MEMORY.md e ERRORS.md em candidatos, decide cada um pelo critério de durabilidade e monta o .dev/CLAUDE.md, pedindo confirmação antes de trocar o CLAUDE.md da raiz.
 disable-model-invocation: true
 argument-hint: "[arquivos de memória além de MEMORY.md e ERRORS.md]"
 ---
 
 # Setup de um projeto existente
 
-Migre este projeto para o BetterDev seguindo os nove passos abaixo, nesta ordem. Arquivos de memória indicados pelo usuário (pode estar vazio): $ARGUMENTS
+Migre este projeto para o BuilderDev seguindo os nove passos abaixo, nesta ordem. Arquivos de memória indicados pelo usuário (pode estar vazio): $ARGUMENTS
 
-Antes do passo 1, confira com `git status` que a árvore está limpa e que a branch atual não é a principal. Se for a principal, proponha `git switch -c chore/betterdev-setup` e espere a resposta.
+Antes do passo 1, confira com `git status` que a árvore está limpa e que a branch atual não é a principal. Se for a principal, proponha `git switch -c chore/builderdev-setup` e espere a resposta.
 
-Os comandos `betterdev` estão no PATH das sessões com o plugin. Se não estiverem, use `node "${CLAUDE_PLUGIN_ROOT}/dist/cli.js"` no lugar.
+Os comandos `builderdev` estão no PATH das sessões com o plugin. Se não estiverem, use `node "${CLAUDE_PLUGIN_ROOT}/dist/cli.js"` no lugar.
 
 ## 1. Registre a linha de base
 
 ```bash
-betterdev stats
+builderdev stats
 ```
 
 Anote o número de sessões e a mediana de tokens na abertura: eles entram no relatório do passo 9. Anote também a data de hoje, que será o `--split-at` das comparações futuras. O Claude Code apaga históricos com mais de 30 dias (`cleanupPeriodDays`), por isso a linha de base também vai para um arquivo no passo 2.
@@ -24,8 +24,8 @@ Anote o número de sessões e a mediana de tokens na abertura: eles entram no re
 ## 2. Crie a estrutura
 
 ```bash
-betterdev init
-betterdev stats --json > .dev/.local/linha-de-base.json
+builderdev init
+builderdev stats --json > .dev/.local/linha-de-base.json
 ```
 
 Se o passo 1 disse que não há históricos do Claude Code para o projeto, rode só o `init` e registre isso no relatório.
@@ -35,7 +35,7 @@ Se o passo 1 disse que não há históricos do Claude Code para o projeto, rode 
 Passe `MEMORY.md`, `ERRORS.md` e os demais arquivos de memória que o `CLAUDE.md` atual manda ler ou que o usuário indicou:
 
 ```bash
-betterdev migrate split MEMORY.md ERRORS.md
+builderdev migrate split MEMORY.md ERRORS.md
 ```
 
 A saída lista um candidato por linha (número, origem com intervalo de linhas, seção e tamanho). Os arquivos ficam em `.dev/.local/migration/NNN.md`.
@@ -50,7 +50,7 @@ Trabalhe em lotes de 10 a 15 candidatos: abra cada `NNN.md` do lote com Read e a
 
 Cada candidato recebe exatamente uma decisão:
 
-- **criar entrada**: passa no critério. Rode `betterdev entry new --track <bug|conhecimento> --slug <assunto>` e preencha o arquivo: `summary` de uma linha que permite decidir pelo índice, `module` da lista, `tags` reusadas, e na trilha `bug` os `symptoms`, `root_cause`, `resolution` e `occurrences: 1`. Corpo de até 40 linhas, só com o que o frontmatter não cobre, citando arquivos e funções pelo nome.
+- **criar entrada**: passa no critério. Rode `builderdev entry new --track <bug|conhecimento> --slug <assunto>` e preencha o arquivo: `summary` de uma linha que permite decidir pelo índice, `module` da lista, `tags` reusadas, e na trilha `bug` os `symptoms`, `root_cause`, `resolution` e `occurrences: 1`. Corpo de até 40 linhas, só com o que o frontmatter não cobre, citando arquivos e funções pelo nome.
 - **fundir com NNN**: trata do mesmo assunto que outro candidato. A entrada é uma só e reúne os dois.
 - **claude-md**: vale para qualquer tarefa no projeto (comandos, arquitetura geral, convenções amplas). Vai para o `.dev/CLAUDE.md` no passo 5.
 - **descartar**: narrativa de sessão, lista de mudanças, o que o código, um comentário, o `git log` ou o README já deixam claro, ou o que já está na memória automática do Claude Code.
@@ -63,7 +63,7 @@ Registre cada decisão em `.dev/.local/migration/decisoes.md`, uma linha por can
 | 007 | ERRORS.md:40-58 | entrada viewshed-crs-metrico | causa não aparece no código |
 ```
 
-Ao fim de cada lote, rode `betterdev lint` e corrija o que ele apontar nas entradas. Avisos `corpus-module` e `corpus-tag` sugerem um valor já usado: troque por ele.
+Ao fim de cada lote, rode `builderdev lint` e corrija o que ele apontar nas entradas. Avisos `corpus-module` e `corpus-tag` sugerem um valor já usado: troque por ele.
 
 ## 5. Monte o .dev/CLAUDE.md
 
@@ -74,7 +74,7 @@ Leia o template em `${CLAUDE_PLUGIN_ROOT}/templates/CLAUDE.md` e o `CLAUDE.md` a
 - quando o `CLAUDE.md` atual já tiver regras equivalentes às de "Como trabalhar", mantenha uma versão só;
 - apague os comentários `<!-- -->` e os marcadores `<...>` do template.
 
-Rode `betterdev lint .dev/CLAUDE.md`: o limite é de 150 linhas.
+Rode `builderdev lint .dev/CLAUDE.md`: o limite é de 150 linhas.
 
 ## 6. Peça confirmação antes de trocar o CLAUDE.md da raiz
 
@@ -98,9 +98,9 @@ Inclua os outros arquivos de memória migrados no passo 3. O conteúdo continua 
 ## 8. Valide e instale os hooks
 
 ```bash
-betterdev lint
-betterdev reindex
-betterdev hooks install
+builderdev lint
+builderdev reindex
+builderdev hooks install
 ```
 
 Corrija o que o `lint` apontar e rode de novo até sair sem erro.
@@ -112,5 +112,5 @@ Sua resposta final contém:
 1. candidatos: total, quantos viraram entrada, quantos foram fundidos, quantos foram para o `.dev/CLAUDE.md` e quantos foram descartados (conte pelo `decisoes.md`);
 2. as entradas criadas, por trilha e `module`;
 3. o contexto de abertura antes: a mediana do passo 1;
-4. o contexto de abertura depois, estimado: some os bytes de `CLAUDE.md`, `.dev/CLAUDE.md`, `.dev/memory/index.md` e `.dev/errors/index.md` (`wc -c`) e divida por 4. Explique que a mediana do passo 1 inclui o prompt de sistema e as ferramentas, e que a medida real vem de `betterdev stats --split-at <data de hoje>` depois de algumas sessões;
+4. o contexto de abertura depois, estimado: some os bytes de `CLAUDE.md`, `.dev/CLAUDE.md`, `.dev/memory/index.md` e `.dev/errors/index.md` (`wc -c`) e divida por 4. Explique que a mediana do passo 1 inclui o prompt de sistema e as ferramentas, e que a medida real vem de `builderdev stats --split-at <data de hoje>` depois de algumas sessões;
 5. os arquivos novos e alterados que o usuário deve revisar e commitar (`.dev/`, `CLAUDE.md`, `.gitignore`).

@@ -13,7 +13,7 @@ export interface CommitMsgResult {
 const REPLAY_STATE = ['rebase-merge', 'rebase-apply', 'CHERRY_PICK_HEAD', 'REVERT_HEAD'];
 
 /**
- * `betterdev commit-msg <arquivo> [origem]`, chamado pelo `prepare-commit-msg`.
+ * `builderdev commit-msg <arquivo> [origem]`, chamado pelo `prepare-commit-msg`.
  * Sem fase ativa, em merge ou squash, não faz nada. Mensagem vazia recebe o `commit_msg` da fase;
  * em todos os casos tratados, o trailer `Plan-Step: <plano>/<fase>` entra uma vez só.
  */

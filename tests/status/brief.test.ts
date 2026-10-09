@@ -13,7 +13,7 @@ useIsolatedGit();
 let root: string;
 
 beforeEach(() => {
-  root = makeRepo('betterdev-brief-');
+  root = makeRepo('builderdev-brief-');
 });
 
 afterEach(() => {
@@ -115,12 +115,12 @@ describe('brief', { timeout: 30_000 }, () => {
   });
 });
 
-describe('betterdev brief (CLI)', { timeout: 30_000 }, () => {
+describe('builderdev brief (CLI)', { timeout: 30_000 }, () => {
   let cliDir: string;
   let cli: BuiltCli;
 
   beforeAll(() => {
-    cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+    cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
     cli = buildCli(cliDir);
   });
 
@@ -133,7 +133,7 @@ describe('betterdev brief (CLI)', { timeout: 30_000 }, () => {
 
     const none = runCli(cli, root, 'brief');
     expect(none.status).toBe(1);
-    expect(none.stderr).toContain('nenhuma fase ativa: use betterdev start <plano>/<fase>');
+    expect(none.stderr).toContain('nenhuma fase ativa: use builderdev start <plano>/<fase>');
 
     startPhase(root, 'demo/f2');
     const active = runCli(cli, root, 'brief');

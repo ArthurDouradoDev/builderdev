@@ -31,7 +31,7 @@ export function parseHookInput(text: string): HookInput {
 }
 
 /**
- * Raiz do projeto BetterDev da sessão, ou `null` fora de um.
+ * Raiz do projeto BuilderDev da sessão, ou `null` fora de um.
  * Usa o `cwd` da entrada (que acompanha a sessão em worktrees e subpastas), subindo até achar `.dev/`;
  * só sem ele recorre a `CLAUDE_PROJECT_DIR` e à pasta atual.
  */

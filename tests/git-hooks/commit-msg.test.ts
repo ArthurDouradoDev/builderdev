@@ -29,7 +29,7 @@ const GIT_TEMPLATE = [
 ].join('\n');
 
 beforeEach(() => {
-  root = makeRepo('betterdev-commitmsg-');
+  root = makeRepo('builderdev-commitmsg-');
   msg = join(root, '.git/COMMIT_EDITMSG');
   writePlan(root, 'demo', PLAN);
 });
@@ -128,7 +128,7 @@ describe('prepare-commit-msg com git de verdade', { timeout: 60_000 }, () => {
   let cli: BuiltCli;
 
   beforeAll(() => {
-    cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+    cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
     cli = buildCli(cliDir);
   });
 
@@ -149,7 +149,7 @@ describe('prepare-commit-msg com git de verdade', { timeout: 60_000 }, () => {
 
   it('commit sem -m: o editor abre com o commit_msg da fase e o trailer', () => {
     startPhase(root, 'demo/f1');
-    const editorDir = mkdtempSync(join(tmpdir(), 'betterdev-editor-'));
+    const editorDir = mkdtempSync(join(tmpdir(), 'builderdev-editor-'));
     const seen = join(editorDir, 'seen.txt').replace(/\\/g, '/');
     const editor = process.env.GIT_EDITOR;
     try {
@@ -222,8 +222,8 @@ describe('prepare-commit-msg com git de verdade', { timeout: 60_000 }, () => {
 
     const r = run('commit', '-q', '--allow-empty', '-m', 'chore: segue');
 
-    expect(r.stderr).toContain('betterdev commit-msg: plano "demo" não encontrado');
-    expect(r.stderr).toContain('betterdev stop');
+    expect(r.stderr).toContain('builderdev commit-msg: plano "demo" não encontrado');
+    expect(r.stderr).toContain('builderdev stop');
     expect(message()).toBe('chore: segue');
   });
 });

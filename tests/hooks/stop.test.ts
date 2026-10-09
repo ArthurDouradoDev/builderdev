@@ -14,7 +14,7 @@ let cli: BuiltCli;
 let root: string;
 
 beforeAll(() => {
-  cliDir = mkdtempSync(join(tmpdir(), 'betterdev-cli-'));
+  cliDir = mkdtempSync(join(tmpdir(), 'builderdev-cli-'));
   cli = buildCli(cliDir);
 });
 
@@ -34,7 +34,7 @@ console.log('tudo certo');
 `;
 
 function setup(verify = ['node spy.mjs'], files = ['src/', 'notas.md']): void {
-  root = mkdtempSync(join(tmpdir(), 'betterdev-stop-'));
+  root = mkdtempSync(join(tmpdir(), 'builderdev-stop-'));
   init(root);
   writePlan(root, 'demo', planSource('demo', [{ id: 'f1', title: 'Primeira', files, verify }]));
   writeFileSync(join(root, 'spy.mjs'), SPY);
@@ -119,7 +119,7 @@ describe('hook Stop', { timeout: 30_000 }, () => {
     const context = result.output!.hookSpecificOutput.additionalContext;
     expect(result.output!.hookSpecificOutput.hookEventName).toBe('Stop');
     const lines = context.split('\n');
-    expect(lines[0]).toBe('[betterdev] verificação da fase f1 falhou: node spy.mjs');
+    expect(lines[0]).toBe('[builderdev] verificação da fase f1 falhou: node spy.mjs');
     const failures = lines.filter((l) => l.startsWith('  '));
     expect(failures).toHaveLength(FAILURE_LINES_MAX);
     expect(failures.every((l) => l.startsWith('  FAIL tests/x.test.ts > caso '))).toBe(true);
@@ -147,7 +147,7 @@ describe('hook Stop', { timeout: 30_000 }, () => {
     const result = stopHook(root, {});
 
     expect(result.action).toBe('falhou');
-    expect(result.output!.hookSpecificOutput.additionalContext.split('\n')[0]).toBe('[betterdev] verificação da fase f1 falhou: node -e "process.exit(3)"');
+    expect(result.output!.hookSpecificOutput.additionalContext.split('\n')[0]).toBe('[builderdev] verificação da fase f1 falhou: node -e "process.exit(3)"');
     expect(spyRuns()).toBe(0);
   });
 
@@ -156,7 +156,7 @@ describe('hook Stop', { timeout: 30_000 }, () => {
 
     expect(result.action).toBe('falhou');
     expect(result.output!.hookSpecificOutput.additionalContext.split('\n')[0]).toBe(
-      '[betterdev] verificação da fase f1 falhou (tempo esgotado após 0 s): node spy.mjs',
+      '[builderdev] verificação da fase f1 falhou (tempo esgotado após 0 s): node spy.mjs',
     );
     expect(spyRuns()).toBe(0);
   });

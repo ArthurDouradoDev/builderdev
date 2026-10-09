@@ -74,7 +74,7 @@ export function buildContext(root: string): string {
   const text = render();
   if (text.length <= CONTEXT_MAX) return text;
   // Só o cabeçalho já passa do teto (objetivo ou lista de arquivos enormes).
-  const marker = '\n[cortado: betterdev brief]';
+  const marker = '\n[cortado: builderdev brief]';
   return text.slice(0, CONTEXT_MAX - marker.length) + marker;
 }
 
@@ -86,9 +86,9 @@ function renderBlock(block: CuttableBlock): string[] {
 /** Primeira linha (branch e fase ativa) e, com fase ativa, objetivo, arquivos e verificação. */
 function phaseLines(root: string): string[] {
   const branch = currentBranch(root);
-  const prefix = `[betterdev] ${branch ? `branch ${branch} · ` : ''}`;
+  const prefix = `[builderdev] ${branch ? `branch ${branch} · ` : ''}`;
   const state = readState(root);
-  if (!state) return [`${prefix}nenhuma fase ativa (planos: betterdev status)`];
+  if (!state) return [`${prefix}nenhuma fase ativa (planos: builderdev status)`];
 
   const ref = `${state.plan}/${state.phase}`;
   try {
@@ -101,10 +101,10 @@ function phaseLines(root: string): string[] {
     if (files.length) lines.push(`Arquivos: ${files.join(', ')}`);
     const verify = textList(phase.yaml.data.verify);
     if (verify.length) lines.push(`Verificação: ${verify.join(' · ')}`);
-    lines.push('Detalhes da fase: betterdev brief');
+    lines.push('Detalhes da fase: builderdev brief');
     return lines;
   } catch (err) {
-    return [`${prefix}fase ativa ${ref} não pôde ser lida: ${(err as Error).message} (betterdev stop limpa)`];
+    return [`${prefix}fase ativa ${ref} não pôde ser lida: ${(err as Error).message} (builderdev stop limpa)`];
   }
 }
 
@@ -145,7 +145,7 @@ function indexBlock(root: string, track: Track): CuttableBlock | null {
     .split(/\r?\n/)
     .filter((l) => l.startsWith('- '));
   const count = `${lines.length} ${lines.length === 1 ? 'entrada' : 'entradas'}`;
-  return { title: `${INDEX_LABELS[track]} (${count}, ${path}):`, lines, shown: lines.length, source: 'betterdev reindex' };
+  return { title: `${INDEX_LABELS[track]} (${count}, ${path}):`, lines, shown: lines.length, source: 'builderdev reindex' };
 }
 
 /** Linhas não vazias do stdout do git; vazio fora de um repositório ou se o comando falhar. */
