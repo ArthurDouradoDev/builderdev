@@ -37,10 +37,7 @@ export interface Scan {
 export async function scanRoot(root: string, now: () => Date = () => new Date()): Promise<Scan> {
   const started = performance.now();
   const abs = resolve(root);
-  const dirs = (await readdir(abs, { withFileTypes: true }))
-    .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'node_modules')
-    .map((d) => d.name)
-    .sort((a, b) => a.localeCompare(b));
+  const dirs = await projectNames(abs);
 
   const at = now();
   const projects = await mapLimit(dirs, SCAN_CONCURRENCY, (name) => readProject(join(abs, name), name, at));
@@ -50,6 +47,31 @@ export async function scanRoot(root: string, now: () => Date = () => new Date())
     durationMs: Math.round(performance.now() - started),
     projects: projects.sort(byAttention),
   };
+}
+
+/**
+ * Um projeto só, lido como na varredura. `name` só vira caminho depois de conferido contra as pastas da raiz;
+ * nome desconhecido devolve `null`.
+ */
+export async function scanProject(root: string, name: string, now: () => Date = () => new Date()): Promise<Project | null> {
+  const found = await findProject(root, name);
+  return found && readProject(found.path, name, now());
+}
+
+/** Pasta e tipo do projeto `name` da raiz, sem ler git nem planos; `null` para nome desconhecido. */
+export async function findProject(root: string, name: string): Promise<{ name: string; path: string; kind: ProjectKind } | null> {
+  const abs = resolve(root);
+  if (!(await projectNames(abs)).includes(name)) return null;
+  const path = join(abs, name);
+  return { name, path, kind: classify(path) };
+}
+
+/** Pastas de primeiro nível de `root`, sem as ocultas e sem `node_modules`, em ordem alfabética. */
+async function projectNames(root: string): Promise<string[]> {
+  return (await readdir(root, { withFileTypes: true }))
+    .filter((d) => d.isDirectory() && !d.name.startsWith('.') && d.name !== 'node_modules')
+    .map((d) => d.name)
+    .sort((a, b) => a.localeCompare(b));
 }
 
 export function classify(dir: string): ProjectKind {

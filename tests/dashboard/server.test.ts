@@ -3,9 +3,10 @@ import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { PlanView } from '../../src/dashboard/plan-view';
 import type { Scan } from '../../src/dashboard/scan';
-import { type DashboardServer, startServer } from '../../src/dashboard/server';
-import { git, useIsolatedGit } from '../helpers/repo';
+import { type DashboardServer, type ProjectPage, startServer } from '../../src/dashboard/server';
+import { commit, git, planSource, useIsolatedGit, writePlan } from '../helpers/repo';
 
 useIsolatedGit();
 
@@ -31,6 +32,16 @@ beforeAll(async () => {
   mkdirSync(join(root, 'repo'));
   git(join(root, 'repo'), 'init', '-q', '-b', 'main');
   git(join(root, 'repo'), 'commit', '-q', '--allow-empty', '-m', 'feat: início');
+
+  // Projeto com BuilderDev e espaço no nome: dois planos, a f1 do mais novo concluída.
+  const bd = join(root, 'com bd');
+  mkdirSync(bd);
+  git(bd, 'init', '-q', '-b', 'main');
+  writePlan(bd, 'antigo', planSource('antigo', [{ id: 'f1' }]).replace('title: Plano antigo', 'title: Plano antigo\ncreated: 2026-01-01'));
+  writePlan(bd, 'novo', planSource('novo', [{ id: 'f1' }, { id: 'f2' }]).replace('title: Plano novo', 'title: Plano novo\ncreated: 2026-09-01'));
+  git(bd, 'add', '.');
+  git(bd, 'commit', '-q', '-m', 'docs: planos');
+  commit(bd, 'feat: entrega da f1', 'novo/f1');
 
   dashboard = await startServer({ root, port: 0, uiDir: ui });
 });
@@ -77,6 +88,7 @@ describe('servidor do painel', { timeout: 30_000 }, () => {
     const scan = JSON.parse(res.body) as Scan;
     expect(scan.root).toBe(join(base, 'projetos'));
     expect(scan.projects.map((p) => [p.name, p.kind]).sort()).toEqual([
+      ['com bd', 'builderdev'],
       ['comum', 'sem-git'],
       ['repo', 'git'],
     ]);
@@ -124,6 +136,65 @@ describe('servidor do painel', { timeout: 30_000 }, () => {
 
   it('rota de API desconhecida recebe 404', async () => {
     expect((await get('/api/nada')).status).toBe(404);
+  });
+
+  it('GET /api/projects/<nome> devolve o card e os planos, do mais recente ao mais antigo', async () => {
+    const res = await get('/api/projects/com%20bd');
+    expect(res.status).toBe(200);
+    expect(res.type).toMatch(/^application\/json/);
+    const page = JSON.parse(res.body) as ProjectPage;
+    expect(page.project).toMatchObject({ name: 'com bd', kind: 'builderdev', error: null });
+    expect(page.project.git!.lastCommit!.subject).toBe('feat: entrega da f1');
+    expect(page.plans.map((p) => [p.id, p.created, `${p.done}/${p.total}`])).toEqual([
+      ['novo', '2026-09-01', '1/2'],
+      ['antigo', '2026-01-01', '0/1'],
+    ]);
+
+    // Projeto sem BuilderDev também tem página, sem planos.
+    const repo = JSON.parse((await get('/api/projects/repo')).body) as ProjectPage;
+    expect(repo).toMatchObject({ project: { name: 'repo', kind: 'git' }, plans: [] });
+  });
+
+  it('GET /api/projects/<nome>/plans/<id> devolve o planView', async () => {
+    const res = await get('/api/projects/com%20bd/plans/novo');
+    expect(res.status).toBe(200);
+    const view = JSON.parse(res.body) as PlanView;
+    expect(view).toMatchObject({ id: 'novo', title: 'Plano novo', done: 1, total: 2 });
+    expect(view.phases.map((p) => [p.id, p.status, p.commits.map((c) => c.subject)])).toEqual([
+      ['f1', 'concluida', ['feat: entrega da f1']],
+      ['f2', 'pendente', []],
+    ]);
+    expect(view.phases[0]!.sections.objective).toBe('Texto exclusivo da f1.');
+  });
+
+  it('projeto ou plano desconhecido recebe 404 com a mensagem em JSON', async () => {
+    for (const path of ['/api/projects/nada', '/api/projects/nada/plans/novo', '/api/projects/com%20bd/plans/nada', '/api/projects/repo/plans/x', '/api/projects/comum/plans/x']) {
+      const res = await get(path);
+      expect(res.status, path).toBe(404);
+      expect(res.type, path).toMatch(/^application\/json/);
+      expect(JSON.parse(res.body).error, path).toBeTruthy();
+    }
+    expect(JSON.parse((await get('/api/projects/com%20bd/plans/nada')).body).error).toMatch(/existentes: antigo, novo/);
+  });
+
+  it('o nome nunca vira caminho: .., %2e%2e, barras codificadas e codificação inválida recebem 404', async () => {
+    for (const path of [
+      '/api/projects/%2e%2e',
+      '/api/projects/%2E%2E/plans/novo',
+      '/api/projects/..',
+      '/api/projects/.',
+      '/api/projects/%2e%2e%2fprojetos',
+      '/api/projects/..%5cpackage.json',
+      '/api/projects/com%20bd%2f..%2f..',
+      '/api/projects/%E0%A4%A',
+      '/api/projects/com%20bd/plans/..%2f..%2fpackage',
+      '/api/projects/com%20bd/plans/..%5cpackage',
+      '/api/projects/com%20bd/extra',
+    ]) {
+      const res = await get(path);
+      expect(res.status, path).toBe(404);
+      expect(res.body, path).not.toContain('segredo');
+    }
   });
 
   it('a porta ocupada rejeita com EADDRINUSE', async () => {

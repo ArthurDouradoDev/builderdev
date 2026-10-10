@@ -1,12 +1,12 @@
 import { formatAge } from '../alerts';
-import type { BuilderdevInfo, PhaseStatus, Project } from './api';
+import type { Alert, BuilderdevInfo, PhaseStatus, PlanSummary, Project } from './api';
+import { formatDate, plural } from './dom';
+import { routeHash } from './router';
 
 // Tudo que vem do projeto entra por textContent ou atributos; nunca por innerHTML.
 
-const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-
 /** Mesmos rótulos do `builderdev status` (STATUS_LABEL em src/plan/status.ts, que não entra no bundle do navegador). */
-const STATUS_LABEL: Record<PhaseStatus, string> = {
+export const STATUS_LABEL: Record<PhaseStatus, string> = {
   concluida: 'concluída',
   ativa: 'ativa',
   bloqueada: 'bloqueada',
@@ -35,7 +35,22 @@ export function renderCard(p: Project, now: number): HTMLElement {
   const card = clone<HTMLElement>('card-template');
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => card.querySelector<T>(sel)!;
   card.dataset.name = p.name;
-  $('.card__name').textContent = p.name;
+  // Só os projetos com BuilderDev têm página; o link cobre o card inteiro (ver .card__link no CSS).
+  if (p.kind === 'builderdev' && !p.error) {
+    const link = document.createElement('a');
+    link.className = 'card__link';
+    link.href = routeHash({ view: 'project', name: p.name });
+    link.textContent = p.name;
+    $('.card__name').append(link);
+    card.classList.add('card--link');
+    // Clique em qualquer ponto do card navega, menos em outro link e ao selecionar texto.
+    card.addEventListener('click', (e) => {
+      if ((e.target as Element).closest('a') || getSelection()?.toString()) return;
+      location.hash = link.hash;
+    });
+  } else {
+    $('.card__name').textContent = p.name;
+  }
 
   const badge = $('.badge');
   const showBadge = (kind: string, text: string) => {
@@ -86,7 +101,7 @@ export function renderCard(p: Project, now: number): HTMLElement {
       g.commitsLast7Days > 0 ? `${plural(g.commitsLast7Days, 'commit', 'commits')} em 7 dias` : 'nenhum commit em 7 dias';
   }
 
-  if (p.builderdev) renderBuilderdev($('.bd'), p.builderdev, now);
+  if (p.builderdev) renderBuilderdev($('.bd'), p.builderdev, now, p.name);
   else $('.bd').remove();
   if (p.kind === 'git' && !p.error) $('.card__adopt').hidden = false;
   else $('.card__adopt').remove();
@@ -96,8 +111,13 @@ export function renderCard(p: Project, now: number): HTMLElement {
     if (!p.error) showBadge('atencao', 'atenção');
   }
 
-  const list = $('.card__alerts');
-  for (const alert of p.alerts) {
+  renderAlerts($('.card__alerts'), p.alerts);
+  return card;
+}
+
+/** Itens da lista de alertas, com ícone e texto (a cor nunca é o único sinal). */
+export function renderAlerts(list: HTMLElement, alerts: Alert[]): void {
+  for (const alert of alerts) {
     if (alert.code === 'sem-git') continue; // o card já diz
     const item = document.createElement('li');
     item.className = `alert alert--${alert.severity}`;
@@ -110,36 +130,44 @@ export function renderCard(p: Project, now: number): HTMLElement {
     item.append(icon, text);
     list.append(item);
   }
-  return card;
+}
+
+/** Preenche `bar` com um segmento por fase, colorido pelo status, e a descrição para leitor de tela. */
+export function renderBar(bar: HTMLElement, plan: Pick<PlanSummary, 'phases' | 'done' | 'total'>): void {
+  for (const phase of plan.phases) {
+    const seg = document.createElement('span');
+    seg.className = `bar__seg bar__seg--${phase.status}`;
+    seg.title = `${phase.id} · ${phase.title} — ${STATUS_LABEL[phase.status]}`;
+    bar.append(seg);
+  }
+  bar.setAttribute(
+    'aria-label',
+    `${plan.done} de ${plan.total} fases concluídas: ${plan.phases.map((ph) => `${ph.id} ${STATUS_LABEL[ph.status]}`).join(', ')}`,
+  );
 }
 
 /** Plano atual com a barra de fases, fase ativa (ou a próxima), último verify e memória. */
-function renderBuilderdev(el: HTMLElement, bd: BuilderdevInfo, now: number): void {
+function renderBuilderdev(el: HTMLElement, bd: BuilderdevInfo, now: number, project: string): void {
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => el.querySelector<T>(sel)!;
   el.hidden = false;
   const current = bd.plans.find((p) => p.id === bd.currentPlan);
 
   const planLine = $('.bd__plan');
   if (current) {
+    // Atalho direto para o grafo do plano atual; fica acima do link do card.
+    const link = document.createElement('a');
+    link.className = 'bd__plan-link';
+    link.href = routeHash({ view: 'plan', name: project, plan: current.id, phase: null });
     const name = document.createElement('strong');
     name.className = 'bd__plan-id';
     name.textContent = current.id;
-    planLine.append(name, current.title ? ` · ${current.title}` : '');
-    planLine.title = [current.title || current.id, current.created ? `criado em ${formatDate(current.created)}` : '']
+    link.append(name, current.title ? ` · ${current.title}` : '');
+    planLine.append(link);
+    link.title = [`ver o fluxo de ${current.title || current.id}`, current.created ? `criado em ${formatDate(current.created)}` : '']
       .filter(Boolean)
       .join('\n');
 
-    const bar = $('.bar');
-    for (const phase of current.phases) {
-      const seg = document.createElement('span');
-      seg.className = `bar__seg bar__seg--${phase.status}`;
-      seg.title = `${phase.id} · ${phase.title} — ${STATUS_LABEL[phase.status]}`;
-      bar.append(seg);
-    }
-    bar.setAttribute(
-      'aria-label',
-      `${current.done} de ${current.total} fases concluídas: ${current.phases.map((ph) => `${ph.id} ${STATUS_LABEL[ph.status]}`).join(', ')}`,
-    );
+    renderBar($('.bar'), current);
     $('.bd__count').textContent = `${current.done}/${plural(current.total, 'fase', 'fases')}`;
   } else {
     planLine.textContent = bd.plans.length ? 'nenhum plano legível em .dev/plans' : 'nenhum plano em .dev/plans';
@@ -191,13 +219,8 @@ function activeLine(bd: BuilderdevInfo, planDone: boolean): Array<string | Node>
   return [label, ` ${a.phase}${a.title ? ` · ${a.title}` : ''}${note}`];
 }
 
-/** AAAA-MM-DD em DD/MM/AAAA, sem passar por fuso. */
-function formatDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
-}
-
-function renderChanges(el: HTMLElement, p: Project): void {
+/** "4 modificados · 1 novo · ↑2 ↓0", com a forma falada para leitor de tela. */
+export function renderChanges(el: HTMLElement, p: Pick<Project, 'git'>): void {
   const { changes, ahead, behind } = p.git!;
   const parts: string[] = [];
   if (changes.modified) parts.push(plural(changes.modified, 'modificado', 'modificados'));
@@ -224,7 +247,7 @@ export function renderSkeletons(count: number): DocumentFragment {
   return fragment;
 }
 
-function clone<T extends Element = Element>(id: string): T {
+export function clone<T extends Element = Element>(id: string): T {
   const template = document.getElementById(id) as HTMLTemplateElement;
   return template.content.firstElementChild!.cloneNode(true) as T;
 }

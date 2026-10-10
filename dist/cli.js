@@ -7832,81 +7832,8 @@ import { readFile, stat as stat2 } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, isAbsolute, join as join9, relative as relative2, resolve as resolve4 } from "node:path";
 
-// src/dashboard/scan.ts
-import { existsSync as existsSync7 } from "node:fs";
-import { readdir } from "node:fs/promises";
-import { join as join8, resolve as resolve3 } from "node:path";
-
-// src/dashboard/alerts.ts
-var MINUTE_MS = 6e4;
-var DAY_MS = 24 * 60 * MINUTE_MS;
-var STALE_CHANGES_MS = 2 * DAY_MS;
-var IDLE_MS = 30 * DAY_MS;
-function alertsFor(project, now) {
-  const alerts = [];
-  const age = (iso) => iso === null ? null : now.getTime() - Date.parse(iso);
-  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
-  if (project.kind === "sem-git") {
-    alerts.push({ code: "sem-git", severity: "info", message: "pasta sem git" });
-  }
-  const git2 = project.git;
-  if (git2) {
-    const oldest = age(git2.changes.oldestMtime);
-    if (oldest !== null && oldest > STALE_CHANGES_MS) {
-      alerts.push({ code: "mudancas-paradas", severity: "atencao", message: `mudan\xE7as sem commit h\xE1 ${formatAge(oldest)}` });
-    }
-    if (git2.behind !== null && git2.behind > 0) {
-      alerts.push({ code: "atras-do-remoto", severity: "atencao", message: `${plural(git2.behind, "commit", "commits")} atr\xE1s do remoto` });
-    }
-    if (git2.ahead !== null && git2.ahead > 0) {
-      alerts.push({ code: "sem-push", severity: "info", message: `${plural(git2.ahead, "commit", "commits")} sem push` });
-    }
-  }
-  if (project.builderdev) alerts.push(...builderdevAlerts(project.builderdev));
-  const idle = age(project.lastActivity);
-  if (idle !== null && idle > IDLE_MS) {
-    alerts.push({ code: "parado", severity: "info", message: `sem atividade h\xE1 ${formatAge(idle)}` });
-  }
-  return alerts.sort((a, b) => Number(b.severity === "atencao") - Number(a.severity === "atencao"));
-}
-function builderdevAlerts(bd) {
-  const alerts = [];
-  const { active, lastVerify: lastVerify2 } = bd;
-  if (active && lastVerify2?.result === "falhou") {
-    const command = lastVerify2.command ? `: ${lastVerify2.command}` : "";
-    alerts.push({ code: "verify-falhou", severity: "atencao", message: `verifica\xE7\xE3o da ${active.phase} falhou${command}` });
-  }
-  if (active && active.blockedBy.length) {
-    alerts.push({ code: "fase-bloqueada", severity: "atencao", message: `fase ativa ${active.phase} bloqueada: aguarda ${active.blockedBy.join(", ")}` });
-  }
-  if (active?.status === "concluida") {
-    alerts.push({ code: "fase-ativa-concluida", severity: "info", message: `a fase ativa ${active.phase} j\xE1 est\xE1 conclu\xEDda` });
-  }
-  const invalid = bd.plans.filter((p) => p.lintErrors > 0);
-  if (invalid.length) {
-    const errors = invalid.reduce((sum, p) => sum + p.lintErrors, 0);
-    const which = invalid.length === 1 ? `plano ${invalid[0].id}` : `planos ${invalid.map((p) => p.id).join(", ")}`;
-    alerts.push({ code: "plano-invalido", severity: "atencao", message: `${which} com ${errors} ${errors === 1 ? "erro" : "erros"} no lint` });
-  }
-  if (bd.memory.repeated > 0) {
-    const n = bd.memory.repeated;
-    alerts.push({ code: "erro-repetido", severity: "info", message: `${n} ${n === 1 ? "erro registrado voltou" : "erros registrados voltaram"} a acontecer` });
-  }
-  return alerts;
-}
-function formatAge(ms) {
-  if (ms < 60 * MINUTE_MS) return `${Math.max(1, Math.floor(ms / MINUTE_MS))} min`;
-  if (ms < DAY_MS) return `${Math.floor(ms / (60 * MINUTE_MS))} h`;
-  const days = Math.floor(ms / DAY_MS);
-  if (days < 60) return `${days} ${days === 1 ? "dia" : "dias"}`;
-  const months = Math.floor(days / 30);
-  if (months < 24) return `${months} meses`;
-  return `${Math.floor(days / 365)} anos`;
-}
-
-// src/dashboard/builderdev.ts
-import { closeSync, existsSync as existsSync6, fstatSync, openSync, readSync } from "node:fs";
-import { join as join6 } from "node:path";
+// src/dashboard/plan-view.ts
+import { posix } from "node:path";
 
 // src/hooks/common.ts
 import { appendFileSync, existsSync as existsSync4, mkdirSync as mkdirSync2, statSync as statSync2 } from "node:fs";
@@ -7938,6 +7865,10 @@ function appendMetric(root, record, now = /* @__PURE__ */ new Date()) {
   appendFileSync(file, `${JSON.stringify({ ...record, ts: now.toISOString() })}
 `);
 }
+
+// src/dashboard/builderdev.ts
+import { closeSync, existsSync as existsSync6, fstatSync, openSync, readSync } from "node:fs";
+import { join as join6 } from "node:path";
 
 // src/memory/schema.ts
 var import_yaml2 = __toESM(require_dist(), 1);
@@ -8434,6 +8365,233 @@ function memoryCounts(dir) {
   return { knowledge: listEntryFiles(join6(dir, TRACK_DIRS.conhecimento)).length, bugs: bugFiles.length, repeated };
 }
 
+// src/dashboard/plan-view.ts
+var HASHES_PER_CALL = 200;
+function planView(dir, planId) {
+  const entry = findPlan(dir, planId);
+  const { plan } = entry;
+  const steps = readPlanSteps(dir);
+  const state = readState(dir);
+  const status = planStatus(entry, steps, state);
+  const yaml = new Map(planPhases(plan).map((p) => [p.id, p.yaml.data]));
+  const resolve11 = (md) => md === null ? null : resolveLinks(md, posix.dirname(entry.path));
+  const known = new Set(status.phases.map((p) => p.id));
+  const orphanRefs = [...steps.keys()].filter((ref) => ref.startsWith(`${entry.id}/`) && !known.has(ref.slice(entry.id.length + 1))).sort((a, b) => a.localeCompare(b, void 0, { numeric: true }));
+  const hashes = [...status.phases.flatMap((p) => p.commits), ...orphanRefs.flatMap((ref) => steps.get(ref))];
+  const commits = describeCommits(dir, hashes);
+  const refs = (list) => list.map((h) => commits.get(h) ?? { hash: h, short: h.slice(0, 7), subject: "", date: "" });
+  const level2 = flattenSections(plan.sections).filter((s) => s.level === 2);
+  const planSection = (name) => resolve11(sectionText(plan, level2.find((s) => sameTitle2(s.title, name))));
+  const phases = status.phases.map((p) => {
+    const data = yaml.get(p.id) ?? {};
+    const body = plan.bodyPhases.find((b) => b.id === p.id);
+    const { sections, extras } = phaseSections(plan, body?.sections ?? []);
+    return {
+      id: p.id,
+      title: p.title,
+      status: p.status,
+      dependsOn: p.dependsOn,
+      blockedBy: p.blockedBy,
+      files: textList(data.files),
+      verify: textList(data.verify),
+      commitMsg: typeof data.commit_msg === "string" && data.commit_msg.trim() ? data.commit_msg.trim() : null,
+      sections: {
+        objective: resolve11(sections.objective),
+        code: resolve11(sections.code),
+        interface: resolve11(sections.interface),
+        tests: resolve11(sections.tests),
+        visualValidation: resolve11(sections.visualValidation)
+      },
+      extraSections: extras.map((x) => ({ title: x.title, markdown: resolve11(x.markdown) })),
+      missingBody: !body,
+      lastVerify: lastVerify(dir, `${entry.id}/${p.id}`),
+      commits: refs(p.commits)
+    };
+  });
+  return {
+    id: entry.id,
+    title: status.title,
+    path: entry.path,
+    branch: stringField(plan.frontmatter.branch),
+    created: dateField(plan.frontmatter.created),
+    context: planSection("Contexto"),
+    outOfScope: planSection("Fora do escopo"),
+    constraints: planSection("Restri\xE7\xF5es herdadas"),
+    activePhase: state?.plan === entry.id && known.has(state.phase) ? state.phase : null,
+    done: phases.filter((p) => p.status === "concluida").length,
+    total: phases.length,
+    phases,
+    orphans: orphanRefs.map((ref) => ({ phase: ref.slice(entry.id.length + 1), commits: refs(steps.get(ref)) }))
+  };
+}
+var PHASE_SECTIONS = { objective: "Objetivo", visualValidation: "Valida\xE7\xE3o visual" };
+var SCOPE_SECTIONS = { code: "C\xF3digo", interface: "Interface", tests: "Testes" };
+var SCOPE = "Escopo";
+function phaseSections(plan, children) {
+  const sections = { objective: null, code: null, interface: null, tests: null, visualValidation: null };
+  const extras = [];
+  const take = (table, s) => {
+    const key = Object.keys(table).find((k) => sameTitle2(s.title, table[k]));
+    if (!key || sections[key] !== null) return false;
+    sections[key] = sectionText(plan, s);
+    return true;
+  };
+  for (const s of children) {
+    if (sameTitle2(s.title, SCOPE)) {
+      const intro = textBetween(plan, s.line, s.children[0] ? s.children[0].line - 1 : s.endLine);
+      if (intro) extras.push({ title: SCOPE, markdown: intro });
+      for (const c of s.children) {
+        if (!take(SCOPE_SECTIONS, c)) extras.push({ title: c.title, markdown: sectionText(plan, c) ?? "" });
+      }
+      continue;
+    }
+    if (take(PHASE_SECTIONS, s) || take(SCOPE_SECTIONS, s)) continue;
+    extras.push({ title: s.title, markdown: sectionText(plan, s) ?? "" });
+  }
+  return { sections, extras };
+}
+function sectionText(plan, section) {
+  if (!section) return null;
+  return textBetween(plan, section.line, section.endLine);
+}
+function textBetween(plan, afterLine, endLine) {
+  return plan.lines.slice(afterLine, endLine).join("\n").replace(/<!--[\s\S]*?-->/g, "").replace(/^\s*\n/, "").trimEnd();
+}
+var sameTitle2 = (a, b) => a.trim().toLowerCase() === b.toLowerCase();
+var FENCE3 = /^ {0,3}(`{3,}|~{3,})/;
+var LINK = /(!?)\[([^\]\n]*)\]\(\s*((?:[^()\s]|\([^()\s]*\))+)(\s+"[^"]*")?\s*\)/g;
+function resolveLinks(md, base) {
+  let fence = null;
+  return md.split("\n").map((line) => {
+    const m = FENCE3.exec(line);
+    if (fence) {
+      if (m?.[1] && m[1][0] === fence[0] && m[1].length >= fence.length && line.trim() === m[1]) fence = null;
+      return line;
+    }
+    if (m?.[1]) {
+      fence = m[1];
+      return line;
+    }
+    return line.split(/(`+[^`]*`+)/).map((part, i) => i % 2 ? part : part.replace(LINK, (all, bang, text, target, title = "") => {
+      const resolved = resolveTarget(target, base);
+      return resolved === null ? all : `${bang}[${text}](${resolved}${title})`;
+    })).join("");
+  }).join("\n");
+}
+function resolveTarget(target, base) {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("#") || target.startsWith("/")) return null;
+  const hashAt = target.indexOf("#");
+  const path = hashAt < 0 ? target : target.slice(0, hashAt);
+  const hash = hashAt < 0 ? "" : target.slice(hashAt);
+  if (!path) return null;
+  const joined = posix.normalize(posix.join(base, path));
+  if (joined === ".." || joined.startsWith("../")) return null;
+  return `${joined}${hash}`;
+}
+function describeCommits(dir, hashes) {
+  const unique = [...new Set(hashes)];
+  const out = /* @__PURE__ */ new Map();
+  for (let i = 0; i < unique.length; i += HASHES_PER_CALL) {
+    const batch = unique.slice(i, i + HASHES_PER_CALL);
+    let text;
+    try {
+      text = git(["log", "--no-walk=unsorted", "--format=%H%x1f%h%x1f%s%x1f%cI%x1e", ...batch, "--"], dir);
+    } catch {
+      text = batch.map((h) => {
+        try {
+          return git(["log", "-1", "--format=%H%x1f%h%x1f%s%x1f%cI%x1e", h, "--"], dir);
+        } catch {
+          return "";
+        }
+      }).join("");
+    }
+    for (const record of text.split("")) {
+      const [hash, short, subject, date] = record.trim().split("");
+      if (hash && short) out.set(hash, { hash, short, subject: subject ?? "", date: date ?? "" });
+    }
+  }
+  return out;
+}
+function stringField(value) {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+function dateField(value) {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString().slice(0, 10);
+  return stringField(value);
+}
+
+// src/dashboard/scan.ts
+import { existsSync as existsSync7 } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { join as join8, resolve as resolve3 } from "node:path";
+
+// src/dashboard/alerts.ts
+var MINUTE_MS = 6e4;
+var DAY_MS = 24 * 60 * MINUTE_MS;
+var STALE_CHANGES_MS = 2 * DAY_MS;
+var IDLE_MS = 30 * DAY_MS;
+function alertsFor(project, now) {
+  const alerts = [];
+  const age = (iso) => iso === null ? null : now.getTime() - Date.parse(iso);
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  if (project.kind === "sem-git") {
+    alerts.push({ code: "sem-git", severity: "info", message: "pasta sem git" });
+  }
+  const git2 = project.git;
+  if (git2) {
+    const oldest = age(git2.changes.oldestMtime);
+    if (oldest !== null && oldest > STALE_CHANGES_MS) {
+      alerts.push({ code: "mudancas-paradas", severity: "atencao", message: `mudan\xE7as sem commit h\xE1 ${formatAge(oldest)}` });
+    }
+    if (git2.behind !== null && git2.behind > 0) {
+      alerts.push({ code: "atras-do-remoto", severity: "atencao", message: `${plural(git2.behind, "commit", "commits")} atr\xE1s do remoto` });
+    }
+    if (git2.ahead !== null && git2.ahead > 0) {
+      alerts.push({ code: "sem-push", severity: "info", message: `${plural(git2.ahead, "commit", "commits")} sem push` });
+    }
+  }
+  if (project.builderdev) alerts.push(...builderdevAlerts(project.builderdev));
+  const idle = age(project.lastActivity);
+  if (idle !== null && idle > IDLE_MS) {
+    alerts.push({ code: "parado", severity: "info", message: `sem atividade h\xE1 ${formatAge(idle)}` });
+  }
+  return alerts.sort((a, b) => Number(b.severity === "atencao") - Number(a.severity === "atencao"));
+}
+function builderdevAlerts(bd) {
+  const alerts = [];
+  const { active, lastVerify: lastVerify2 } = bd;
+  if (active && lastVerify2?.result === "falhou") {
+    const command = lastVerify2.command ? `: ${lastVerify2.command}` : "";
+    alerts.push({ code: "verify-falhou", severity: "atencao", message: `verifica\xE7\xE3o da ${active.phase} falhou${command}` });
+  }
+  if (active && active.blockedBy.length) {
+    alerts.push({ code: "fase-bloqueada", severity: "atencao", message: `fase ativa ${active.phase} bloqueada: aguarda ${active.blockedBy.join(", ")}` });
+  }
+  if (active?.status === "concluida") {
+    alerts.push({ code: "fase-ativa-concluida", severity: "info", message: `a fase ativa ${active.phase} j\xE1 est\xE1 conclu\xEDda` });
+  }
+  const invalid = bd.plans.filter((p) => p.lintErrors > 0);
+  if (invalid.length) {
+    const errors = invalid.reduce((sum, p) => sum + p.lintErrors, 0);
+    const which = invalid.length === 1 ? `plano ${invalid[0].id}` : `planos ${invalid.map((p) => p.id).join(", ")}`;
+    alerts.push({ code: "plano-invalido", severity: "atencao", message: `${which} com ${errors} ${errors === 1 ? "erro" : "erros"} no lint` });
+  }
+  if (bd.memory.repeated > 0) {
+    const n = bd.memory.repeated;
+    alerts.push({ code: "erro-repetido", severity: "info", message: `${n} ${n === 1 ? "erro registrado voltou" : "erros registrados voltaram"} a acontecer` });
+  }
+  return alerts;
+}
+function formatAge(ms) {
+  if (ms < 60 * MINUTE_MS) return `${Math.max(1, Math.floor(ms / MINUTE_MS))} min`;
+  if (ms < DAY_MS) return `${Math.floor(ms / (60 * MINUTE_MS))} h`;
+  const days = Math.floor(ms / DAY_MS);
+  if (days < 60) return `${days} ${days === 1 ? "dia" : "dias"}`;
+  const months = Math.floor(days / 30);
+  if (months < 24) return `${months} meses`;
+  return `${Math.floor(days / 365)} anos`;
+}
+
 // src/dashboard/git-info.ts
 import { stat } from "node:fs/promises";
 import { dirname as dirname4, join as join7 } from "node:path";
@@ -8518,7 +8676,7 @@ var SCAN_CONCURRENCY = 4;
 async function scanRoot(root, now = () => /* @__PURE__ */ new Date()) {
   const started = performance.now();
   const abs = resolve3(root);
-  const dirs = (await readdir(abs, { withFileTypes: true })).filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "node_modules").map((d) => d.name).sort((a, b) => a.localeCompare(b));
+  const dirs = await projectNames(abs);
   const at = now();
   const projects = await mapLimit(dirs, SCAN_CONCURRENCY, (name) => readProject(join8(abs, name), name, at));
   return {
@@ -8527,6 +8685,19 @@ async function scanRoot(root, now = () => /* @__PURE__ */ new Date()) {
     durationMs: Math.round(performance.now() - started),
     projects: projects.sort(byAttention)
   };
+}
+async function scanProject(root, name, now = () => /* @__PURE__ */ new Date()) {
+  const found = await findProject(root, name);
+  return found && readProject(found.path, name, now());
+}
+async function findProject(root, name) {
+  const abs = resolve3(root);
+  if (!(await projectNames(abs)).includes(name)) return null;
+  const path = join8(abs, name);
+  return { name, path, kind: classify(path) };
+}
+async function projectNames(root) {
+  return (await readdir(root, { withFileTypes: true })).filter((d) => d.isDirectory() && !d.name.startsWith(".") && d.name !== "node_modules").map((d) => d.name).sort((a, b) => a.localeCompare(b));
 }
 function classify(dir) {
   if (!existsSync7(join8(dir, ".git"))) return "sem-git";
@@ -8593,7 +8764,7 @@ async function startServer({ root, port, uiDir }) {
   };
   let actualPort = port;
   const server = createServer((req, res) => {
-    handle(req, res, { port: actualPort, ui, scan }).catch((err) => {
+    handle(req, res, { root, port: actualPort, ui, scan }).catch((err) => {
       send(res, 500, "text/plain; charset=utf-8", `erro interno: ${err.message}`);
     });
   });
@@ -8629,9 +8800,9 @@ async function handle(req, res, ctx) {
   if (pathname === "/api/projects") {
     return send(res, 200, CONTENT_TYPES[".json"], JSON.stringify(await ctx.scan()));
   }
-  if (pathname.startsWith("/api/")) {
-    return send(res, 404, CONTENT_TYPES[".json"], JSON.stringify({ error: "rota desconhecida" }));
-  }
+  const route = PROJECT_ROUTE.exec(pathname);
+  if (route) return projectRoute(res, ctx.root, route[1], route[2]);
+  if (pathname.startsWith("/api/")) return sendJson(res, 404, { error: "rota desconhecida" });
   const file = await staticFile(ctx.ui, pathname) ?? join9(ctx.ui, "index.html");
   const type = CONTENT_TYPES[extname(file).toLowerCase()] ?? "application/octet-stream";
   try {
@@ -8639,6 +8810,39 @@ async function handle(req, res, ctx) {
   } catch {
     send(res, 404, "text/plain; charset=utf-8", "UI n\xE3o encontrada: rode npm run build");
   }
+}
+var PROJECT_ROUTE = /^\/api\/projects\/([^/]+)(?:\/plans\/([^/]+))?\/?$/;
+async function projectRoute(res, root, rawName, rawPlan) {
+  const name = decodeSegment(rawName);
+  const planId = rawPlan === void 0 ? void 0 : decodeSegment(rawPlan);
+  if (name === null || planId === null) return sendJson(res, 404, { error: "projeto n\xE3o encontrado" });
+  if (planId === void 0) {
+    const project2 = await scanProject(root, name);
+    if (!project2) return sendJson(res, 404, { error: `projeto "${name}" n\xE3o encontrado na raiz` });
+    const page = { project: project2, plans: newestFirst(project2.builderdev?.plans ?? []) };
+    return sendJson(res, 200, page);
+  }
+  const project = await findProject(root, name);
+  if (!project) return sendJson(res, 404, { error: `projeto "${name}" n\xE3o encontrado na raiz` });
+  if (project.kind !== "builderdev") return sendJson(res, 404, { error: `"${name}" n\xE3o usa o BuilderDev` });
+  try {
+    return sendJson(res, 200, planView(project.path, planId));
+  } catch (err) {
+    if (err instanceof ProjectError) return sendJson(res, 404, { error: err.message });
+    return sendJson(res, 500, { error: err.message });
+  }
+}
+function decodeSegment(raw) {
+  let value;
+  try {
+    value = decodeURIComponent(raw);
+  } catch {
+    return null;
+  }
+  return value && !/[/\\\0]/.test(value) ? value : null;
+}
+function newestFirst(plans) {
+  return plans.map((plan, index) => ({ plan, index })).sort((a, b) => (b.plan.created ?? "").localeCompare(a.plan.created ?? "") || b.index - a.index).map((x) => x.plan);
 }
 async function staticFile(ui, pathname) {
   let decoded;
@@ -8656,6 +8860,9 @@ async function staticFile(ui, pathname) {
   } catch {
     return null;
   }
+}
+function sendJson(res, status, body) {
+  send(res, status, CONTENT_TYPES[".json"], JSON.stringify(body));
 }
 function send(res, status, type, body) {
   res.writeHead(status, {
@@ -9494,14 +9701,14 @@ import { mkdirSync as mkdirSync7, readFileSync as readFileSync14, readdirSync as
 import { join as join18, relative as relative5, resolve as resolve8, sep as sep4 } from "node:path";
 var MIGRATION_DIR = ".dev/.local/migration";
 var HEADING2 = /^ {0,3}(#{1,6})[ \t]+(.*?)(?:[ \t]+#+)?[ \t]*$/;
-var FENCE3 = /^ {0,3}(`{3,}|~{3,})/;
+var FENCE4 = /^ {0,3}(`{3,}|~{3,})/;
 var CANDIDATE_FILE = /^\d{3,}\.md$/;
 function splitMarkdown(source, text) {
   const lines = text.replace(/^﻿/, "").split(/\r?\n/);
   const starts = [];
   let fence = null;
   lines.forEach((line, i) => {
-    const fenceMatch = FENCE3.exec(line);
+    const fenceMatch = FENCE4.exec(line);
     if (fence) {
       if (fenceMatch?.[1] && fenceMatch[1][0] === fence[0] && fenceMatch[1].length >= fence.length && line.trim() === fenceMatch[1]) fence = null;
       return;

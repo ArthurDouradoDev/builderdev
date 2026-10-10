@@ -10,6 +10,14 @@
     <script src="/app.js" defer></script>
   </head>
   <body>
+    <div class="banner" id="offline" role="alert" hidden>
+      <strong>O painel parou:</strong> rode <code>builderdev dashboard</code> de novo.
+    </div>
+
+    <!-- Página do projeto e fluxo do plano: montadas em main.ts conforme a rota (#/p/...). -->
+    <main id="view-page" hidden></main>
+
+    <div id="view-home">
     <header class="top">
       <div class="top__title">
         <h1>Projetos</h1>
@@ -20,10 +28,6 @@
         <button class="button" id="refresh" type="button">Atualizar</button>
       </div>
     </header>
-
-    <div class="banner" id="offline" role="alert" hidden>
-      <strong>O painel parou:</strong> rode <code>builderdev dashboard</code> de novo.
-    </div>
 
     <section class="summary" aria-label="Resumo">
       <div class="stat"><span class="stat__value" id="stat-total">–</span><span class="stat__label">projetos</span></div>
@@ -47,6 +51,7 @@
 
     <main class="grid" id="grid" aria-busy="true"></main>
     <p class="empty" id="empty" hidden></p>
+    </div>
 
     <template id="card-template">
       <article class="card">
