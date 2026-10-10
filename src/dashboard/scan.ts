@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { type Alert, alertsFor } from './alerts';
+import { type BuilderdevInfo, builderdevInfo } from './builderdev';
 import { type GitInfo, gitInfo, latest, mtimeOf } from './git-info';
 
 /** Projetos lidos ao mesmo tempo: cada um dispara ~5 processos git. */
@@ -16,6 +17,8 @@ export interface Project {
   kind: ProjectKind;
   /** `null` em pasta sem git ou quando a leitura falhou. */
   git: GitInfo | null;
+  /** Planos, fase ativa, verificação e memória; só em projetos `builderdev` lidos sem erro. */
+  builderdev: BuilderdevInfo | null;
   lastActivity: string | null;
   alerts: Alert[];
   /** Mensagem da falha ao ler o projeto; o card mostra isto no lugar dos dados. */
@@ -58,11 +61,14 @@ async function readProject(path: string, name: string, now: Date): Promise<Proje
   const kind = classify(path);
   const base = { name, path, kind };
   try {
-    const git = kind === 'sem-git' ? null : await gitInfo(path);
+    const [git, builderdev] = await Promise.all([
+      kind === 'sem-git' ? null : gitInfo(path),
+      kind === 'builderdev' ? Promise.resolve().then(() => builderdevInfo(path)) : null,
+    ]);
     const lastActivity = git ? git.lastActivity : await newestEntry(path);
-    return { ...base, git, lastActivity, alerts: alertsFor({ kind, git, lastActivity }, now), error: null };
+    return { ...base, git, builderdev, lastActivity, alerts: alertsFor({ kind, git, builderdev, lastActivity }, now), error: null };
   } catch (err) {
-    return { ...base, git: null, lastActivity: null, alerts: [], error: (err as Error).message };
+    return { ...base, git: null, builderdev: null, lastActivity: null, alerts: [], error: (err as Error).message };
   }
 }
 

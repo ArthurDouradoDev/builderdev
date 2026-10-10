@@ -1,9 +1,17 @@
 import { formatAge } from '../alerts';
-import type { Project } from './api';
+import type { BuilderdevInfo, PhaseStatus, Project } from './api';
 
 // Tudo que vem do projeto entra por textContent ou atributos; nunca por innerHTML.
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** Mesmos rótulos do `builderdev status` (STATUS_LABEL em src/plan/status.ts, que não entra no bundle do navegador). */
+const STATUS_LABEL: Record<PhaseStatus, string> = {
+  concluida: 'concluída',
+  ativa: 'ativa',
+  bloqueada: 'bloqueada',
+  pendente: 'pendente',
+};
 
 /** "agora" ou "há 3 h", relativo a `now`. */
 export function ago(iso: string, now: number): string {
@@ -78,6 +86,11 @@ export function renderCard(p: Project, now: number): HTMLElement {
       g.commitsLast7Days > 0 ? `${plural(g.commitsLast7Days, 'commit', 'commits')} em 7 dias` : 'nenhum commit em 7 dias';
   }
 
+  if (p.builderdev) renderBuilderdev($('.bd'), p.builderdev, now);
+  else $('.bd').remove();
+  if (p.kind === 'git' && !p.error) $('.card__adopt').hidden = false;
+  else $('.card__adopt').remove();
+
   if (hasAttention(p)) {
     card.classList.add('card--atencao');
     if (!p.error) showBadge('atencao', 'atenção');
@@ -98,6 +111,90 @@ export function renderCard(p: Project, now: number): HTMLElement {
     list.append(item);
   }
   return card;
+}
+
+/** Plano atual com a barra de fases, fase ativa (ou a próxima), último verify e memória. */
+function renderBuilderdev(el: HTMLElement, bd: BuilderdevInfo, now: number): void {
+  const $ = <T extends HTMLElement = HTMLElement>(sel: string) => el.querySelector<T>(sel)!;
+  el.hidden = false;
+  const current = bd.plans.find((p) => p.id === bd.currentPlan);
+
+  const planLine = $('.bd__plan');
+  if (current) {
+    const name = document.createElement('strong');
+    name.className = 'bd__plan-id';
+    name.textContent = current.id;
+    planLine.append(name, current.title ? ` · ${current.title}` : '');
+    planLine.title = [current.title || current.id, current.created ? `criado em ${formatDate(current.created)}` : '']
+      .filter(Boolean)
+      .join('\n');
+
+    const bar = $('.bar');
+    for (const phase of current.phases) {
+      const seg = document.createElement('span');
+      seg.className = `bar__seg bar__seg--${phase.status}`;
+      seg.title = `${phase.id} · ${phase.title} — ${STATUS_LABEL[phase.status]}`;
+      bar.append(seg);
+    }
+    bar.setAttribute(
+      'aria-label',
+      `${current.done} de ${current.total} fases concluídas: ${current.phases.map((ph) => `${ph.id} ${STATUS_LABEL[ph.status]}`).join(', ')}`,
+    );
+    $('.bd__count').textContent = `${current.done}/${plural(current.total, 'fase', 'fases')}`;
+  } else {
+    planLine.textContent = bd.plans.length ? 'nenhum plano legível em .dev/plans' : 'nenhum plano em .dev/plans';
+    planLine.classList.add('bd__none');
+    $('.bd__progress').remove();
+  }
+
+  $('.bd__active').append(...activeLine(bd, current?.done === current?.total && !!current));
+
+  const verify = $('.bd__verify');
+  if (!bd.active) {
+    verify.remove();
+  } else if (!bd.lastVerify) {
+    verify.textContent = 'verify: ainda não rodou nesta fase';
+  } else {
+    const v = bd.lastVerify;
+    const failed = v.result === 'falhou';
+    verify.classList.add(failed ? 'bd__verify--falhou' : 'bd__verify--ok');
+    const icon = document.createElement('span');
+    icon.className = 'bd__verify-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = failed ? '✕' : '✓';
+    const what = failed ? 'falhou' : v.result === 'sem-mudanca' ? 'aprovado, sem mudança desde então' : 'aprovado';
+    verify.append('verify: ', icon, ` ${what}${v.at ? ` ${ago(v.at, now)}` : ''}`);
+    verify.title = [
+      v.command ? `comando: ${v.command}` : '',
+      v.durationMs !== null ? `duração: ${(v.durationMs / 1000).toFixed(1)} s` : '',
+      v.log ? `log: ${v.log}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  const { knowledge, bugs, repeated } = bd.memory;
+  $('.bd__memory').textContent = `memória ${knowledge} · erros ${bugs}${repeated ? ` (${plural(repeated, 'repetido', 'repetidos')})` : ''}`;
+}
+
+function activeLine(bd: BuilderdevInfo, planDone: boolean): Array<string | Node> {
+  const a = bd.active;
+  if (!a) {
+    const next = bd.next ? ` · próxima: ${bd.next.phase} · ${bd.next.title}` : planDone ? ' · plano concluído' : '';
+    return [`nenhuma fase ativa${next}`];
+  }
+  const label = document.createElement('span');
+  label.className = 'bd__active-label';
+  label.textContent = 'ativa:';
+  if (a.status === null) return [label, ` ${a.plan}/${a.phase} (não existe mais no plano)`];
+  const note = a.status === 'concluida' ? ' (já concluída)' : a.blockedBy.length ? ` (bloqueada: aguarda ${a.blockedBy.join(', ')})` : '';
+  return [label, ` ${a.phase}${a.title ? ` · ${a.title}` : ''}${note}`];
+}
+
+/** AAAA-MM-DD em DD/MM/AAAA, sem passar por fuso. */
+function formatDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
 function renderChanges(el: HTMLElement, p: Project): void {

@@ -1,3 +1,4 @@
+import type { BuilderdevInfo } from './builderdev';
 import type { Project } from './scan';
 
 const MINUTE_MS = 60_000;
@@ -8,7 +9,17 @@ export const STALE_CHANGES_MS = 2 * DAY_MS;
 /** Projeto sem atividade há mais que isto conta como parado. */
 export const IDLE_MS = 30 * DAY_MS;
 
-export type AlertCode = 'mudancas-paradas' | 'atras-do-remoto' | 'sem-push' | 'parado' | 'sem-git';
+export type AlertCode =
+  | 'mudancas-paradas'
+  | 'atras-do-remoto'
+  | 'sem-push'
+  | 'parado'
+  | 'sem-git'
+  | 'verify-falhou'
+  | 'fase-bloqueada'
+  | 'fase-ativa-concluida'
+  | 'plano-invalido'
+  | 'erro-repetido';
 
 export interface Alert {
   code: AlertCode;
@@ -16,8 +27,10 @@ export interface Alert {
   message: string;
 }
 
+export type AlertInput = Pick<Project, 'kind' | 'git' | 'lastActivity'> & { builderdev?: BuilderdevInfo | null };
+
 /** Alertas de `project` no instante `now`, os de atenção primeiro. */
-export function alertsFor(project: Pick<Project, 'kind' | 'git' | 'lastActivity'>, now: Date): Alert[] {
+export function alertsFor(project: AlertInput, now: Date): Alert[] {
   const alerts: Alert[] = [];
   const age = (iso: string | null) => (iso === null ? null : now.getTime() - Date.parse(iso));
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -40,12 +53,44 @@ export function alertsFor(project: Pick<Project, 'kind' | 'git' | 'lastActivity'
     }
   }
 
+  if (project.builderdev) alerts.push(...builderdevAlerts(project.builderdev));
+
   const idle = age(project.lastActivity);
   if (idle !== null && idle > IDLE_MS) {
     alerts.push({ code: 'parado', severity: 'info', message: `sem atividade há ${formatAge(idle)}` });
   }
 
   return alerts.sort((a, b) => Number(b.severity === 'atencao') - Number(a.severity === 'atencao'));
+}
+
+function builderdevAlerts(bd: BuilderdevInfo): Alert[] {
+  const alerts: Alert[] = [];
+  const { active, lastVerify } = bd;
+
+  if (active && lastVerify?.result === 'falhou') {
+    // Quando falhou, a linha "verify:" do card já diz.
+    const command = lastVerify.command ? `: ${lastVerify.command}` : '';
+    alerts.push({ code: 'verify-falhou', severity: 'atencao', message: `verificação da ${active.phase} falhou${command}` });
+  }
+  if (active && active.blockedBy.length) {
+    alerts.push({ code: 'fase-bloqueada', severity: 'atencao', message: `fase ativa ${active.phase} bloqueada: aguarda ${active.blockedBy.join(', ')}` });
+  }
+  if (active?.status === 'concluida') {
+    alerts.push({ code: 'fase-ativa-concluida', severity: 'info', message: `a fase ativa ${active.phase} já está concluída` });
+  }
+
+  const invalid = bd.plans.filter((p) => p.lintErrors > 0);
+  if (invalid.length) {
+    const errors = invalid.reduce((sum, p) => sum + p.lintErrors, 0);
+    const which = invalid.length === 1 ? `plano ${invalid[0]!.id}` : `planos ${invalid.map((p) => p.id).join(', ')}`;
+    alerts.push({ code: 'plano-invalido', severity: 'atencao', message: `${which} com ${errors} ${errors === 1 ? 'erro' : 'erros'} no lint` });
+  }
+
+  if (bd.memory.repeated > 0) {
+    const n = bd.memory.repeated;
+    alerts.push({ code: 'erro-repetido', severity: 'info', message: `${n} ${n === 1 ? 'erro registrado voltou' : 'erros registrados voltaram'} a acontecer` });
+  }
+  return alerts;
 }
 
 /** Duração em texto curto: "5 min", "3 h", "2 dias", "4 meses". */

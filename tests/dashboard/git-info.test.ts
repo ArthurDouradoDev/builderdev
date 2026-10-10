@@ -94,7 +94,8 @@ describe('gitInfo', { timeout: 30_000 }, () => {
     expect(changes).toEqual({ modified: 1, untracked: 0, oldestMtime: null, newestMtime: null });
   });
 
-  it('upstream local: à frente e atrás pelo último fetch', async () => {
+  // ~16 processos git (clone, fetch, push, commits): no Windows sob carga passa dos 30 s do describe.
+  it('upstream local: à frente e atrás pelo último fetch', { timeout: 120_000 }, async () => {
     commitFile(repo, 'a.txt', '1');
     const remote = join(base, 'remoto.git');
     git(base, 'clone', '-q', '--bare', repo, remote);

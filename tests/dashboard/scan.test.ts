@@ -1,8 +1,9 @@
-import { mkdirSync, utimesSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, utimesSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { classify, scanRoot } from '../../src/dashboard/scan';
-import { git, makeRepo, removeRepo, useIsolatedGit } from '../helpers/repo';
+import { commit, git, makeRepo, removeRepo, useIsolatedGit } from '../helpers/repo';
 
 useIsolatedGit();
 
@@ -108,6 +109,28 @@ describe('scanRoot', { timeout: 30_000 }, () => {
 
     const scan = await scanRoot(root);
     expect(scan.projects.map((p) => p.name)).toEqual(['pendente', 'recente', 'antigo']);
+  });
+
+  it('projeto BuilderDev traz os blocos do git e do BuilderDev; os outros ficam sem', async () => {
+    const dir = join(root, 'com builderdev');
+    cpSync(fileURLToPath(new URL('../fixtures/dashboard/projeto', import.meta.url)), dir, { recursive: true });
+    git(dir, 'init', '-q', '-b', 'main');
+    git(dir, 'add', '.dev/plans');
+    git(dir, 'commit', '-q', '-m', 'docs: planos');
+    commit(dir, 'feat: coleta dos dados do relatório', 'relatorios/f1');
+    repoAt('repo');
+
+    const scan = await scanRoot(root);
+    const bd = scan.projects.find((p) => p.name === 'com builderdev')!;
+    expect(bd.kind).toBe('builderdev');
+    expect(bd.error).toBeNull();
+    expect(bd.git?.lastCommit?.subject).toBe('feat: coleta dos dados do relatório');
+    expect(bd.builderdev?.currentPlan).toBe('relatorios');
+    expect(bd.builderdev?.active?.phase).toBe('f2');
+    expect(bd.builderdev?.memory).toEqual({ knowledge: 2, bugs: 2, repeated: 1 });
+    expect(bd.alerts.map((a) => a.code)).toContain('erro-repetido');
+
+    expect(scan.projects.find((p) => p.name === 'repo')!.builderdev).toBeNull();
   });
 
   it('raiz vazia devolve lista vazia', async () => {

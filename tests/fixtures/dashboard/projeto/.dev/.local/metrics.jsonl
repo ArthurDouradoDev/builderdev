@@ -1,0 +1,7 @@
+{"evento":"session-start","source":"startup","caracteres":812,"session_id":"s1","ts":"2026-10-08T09:00:05.000Z"}
+{"evento":"verify","fase":"relatorios/f1","resultado":"aprovado","duracao_ms":4100,"log":".dev/.local/verify/2026-10-01T10-00-00.log","ts":"2026-10-01T10:00:00.000Z"}
+{"evento":"verify","fase":"relatorios/f2","resultado":"falhou","comando":"npm test -- pdf","duracao_ms":3200,"log":".dev/.local/verify/2026-10-08T10-00-00.log","ts":"2026-10-08T10:00:00.000Z"}
+{"evento":"verify","fase":"relatorios/f2","resultado":"aprovado","duracao_ms":3900,"log":".dev/.local/verify/2026-10-08T11-00-00.log","ts":"2026-10-08T11:00:00.000Z"}
+{"evento":"verify","fase":"relatorios/f2","resultado":"falh
+{"evento":"compact","trigger":"auto","session_id":"s1","ts":"2026-10-08T11:30:00.000Z"}
+{"evento":"verify","fase":"importacao/f2","resultado":"falhou","comando":"npm test -- validacao","duracao_ms":2100,"log":".dev/.local/verify/2026-10-08T12-00-00.log","ts":"2026-10-08T12:00:00.000Z"}

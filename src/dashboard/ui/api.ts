@@ -1,6 +1,8 @@
 import type { Scan } from '../scan';
 
 export type { Alert } from '../alerts';
+export type { BuilderdevInfo } from '../builderdev';
+export type { PhaseStatus } from '../../plan/status';
 export type { Project, Scan } from '../scan';
 
 /** O servidor não respondeu ou respondeu com erro. */
