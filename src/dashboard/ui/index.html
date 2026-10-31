@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Projetos · builderdev</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <div class="banner" id="offline" role="alert" hidden>
+      <strong>O painel parou:</strong> rode <code>builderdev dashboard</code> de novo.
+    </div>
+
+    <!-- Página do projeto e fluxo do plano: montadas em main.ts conforme a rota (#/p/...). -->
+    <main id="view-page" hidden></main>
+
+    <div id="view-home">
+    <header class="top">
+      <div class="top__title">
+        <h1>Projetos</h1>
+        <p class="top__root" id="root">&nbsp;</p>
+      </div>
+      <div class="top__actions">
+        <span class="top__updated" id="updated" aria-live="polite"></span>
+        <button class="button" id="refresh" type="button">Atualizar</button>
+      </div>
+    </header>
+
+    <section class="summary" aria-label="Resumo">
+      <div class="stat"><span class="stat__value" id="stat-total">–</span><span class="stat__label">projetos</span></div>
+      <div class="stat stat--atencao"><span class="stat__value" id="stat-atencao">–</span><span class="stat__label">com atenção</span></div>
+      <div class="stat"><span class="stat__value" id="stat-mudancas">–</span><span class="stat__label">com mudanças sem commit</span></div>
+      <div class="stat"><span class="stat__value" id="stat-parados">–</span><span class="stat__label">parados</span></div>
+    </section>
+
+    <nav class="toolbar" aria-label="Filtros">
+      <div class="filters" role="group" aria-label="Mostrar">
+        <button class="filter" type="button" data-filter="todos">Todos <span class="filter__count"></span></button>
+        <button class="filter" type="button" data-filter="atencao">Com atenção <span class="filter__count"></span></button>
+        <button class="filter" type="button" data-filter="builderdev">BuilderDev <span class="filter__count"></span></button>
+        <button class="filter" type="button" data-filter="parados">Parados <span class="filter__count"></span></button>
+      </div>
+      <label class="search">
+        <span class="sr-only">Buscar projeto pelo nome</span>
+        <input id="search" type="search" placeholder="Buscar pelo nome" autocomplete="off" spellcheck="false" />
+      </label>
+    </nav>
+
+    <main class="grid" id="grid" aria-busy="true"></main>
+    <p class="empty" id="empty" hidden></p>
+    </div>
+
+    <template id="card-template">
+      <article class="card">
+        <header class="card__head">
+          <h2 class="card__name"></h2>
+          <span class="badge" hidden></span>
+        </header>
+        <p class="card__line card__where"><span class="card__branch"></span><span class="card__sep" aria-hidden="true"> · </span><time class="card__ago"></time></p>
+        <p class="card__line card__commit"></p>
+        <p class="card__line card__changes"></p>
+        <p class="card__line card__pace"></p>
+        <section class="bd" aria-label="BuilderDev" hidden>
+          <p class="card__line bd__plan"></p>
+          <div class="bd__progress">
+            <span class="bar" role="img"></span>
+            <span class="bd__count"></span>
+          </div>
+          <p class="card__line bd__active"></p>
+          <p class="card__line bd__verify"></p>
+          <p class="card__line bd__memory"></p>
+        </section>
+        <p class="card__line card__adopt" hidden>sem BuilderDev · <code>/builderdev:setup</code></p>
+        <ul class="card__alerts"></ul>
+        <p class="card__error" hidden></p>
+      </article>
+    </template>
+
+    <template id="skeleton-template">
+      <div class="card card--skeleton" aria-hidden="true">
+        <span class="bone bone--title"></span>
+        <span class="bone"></span>
+        <span class="bone bone--long"></span>
+        <span class="bone"></span>
+      </div>
+    </template>
+  </body>
+</html>

@@ -1,9 +1,12 @@
 #!/usr/bin/env node
+import { spawn } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, delimiter, join, relative, resolve, sep } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import pkg from '../package.json' with { type: 'json' };
 import { prepareCommitMsg } from './commit-msg';
+import { DEFAULT_PORT, startServer } from './dashboard/server';
 import { installHook, uninstallHook } from './git/hooks-install';
 import { GitError, readPlanSteps } from './git/log';
 import { hookProjectRoot, parseHookInput, type HookInput } from './hooks/common';
@@ -43,6 +46,9 @@ comandos:
   stats [--project <caminho>] [--split-at <AAAA-MM-DD>] [--json]
                               métricas por sessão dos históricos do Claude Code e medianas antes e depois da data
   migrate split <arquivos...> divide MEMORY.md, ERRORS.md etc. pelos títulos em candidatos em .dev/.local/migration/
+  dashboard [--root <pasta>] [--port <n>] [--no-open]
+                              painel no navegador com um card por projeto das subpastas da raiz
+                              (padrão: pasta atual, porta ${DEFAULT_PORT}; 0 escolhe uma livre)
   hooks install|uninstall     instala ou remove o git hook prepare-commit-msg
   commit-msg <arquivo> [origem]
                               usado pelo git hook: preenche a mensagem e o trailer da fase ativa
@@ -53,7 +59,7 @@ opções gerais:
   -h, --help                  mostra esta ajuda
   -v, --version               mostra a versão`;
 
-type Command = (args: string[]) => number;
+type Command = (args: string[]) => number | Promise<number>;
 
 const commands: Record<string, Command> = {
   lint(args) {
@@ -236,6 +242,37 @@ const commands: Record<string, Command> = {
     return 0;
   },
 
+  // Resolve assim que o servidor sobe; o processo continua vivo por ele até o Ctrl+C.
+  async dashboard(args) {
+    const { values } = parseArgs({
+      args,
+      allowPositionals: false,
+      options: { root: { type: 'string' }, port: { type: 'string' }, 'no-open': { type: 'boolean' } },
+    });
+    const root = resolve(values.root ?? '.');
+    if (!existsSync(root) || !statSync(root).isDirectory()) throw new ProjectError(`pasta não encontrada: ${values.root}`);
+    const port = values.port === undefined ? DEFAULT_PORT : Number(values.port);
+    if (!/^\d+$/.test(values.port ?? '0') || port > 65535) throw new UsageError(`--port deve ser um número de 0 a 65535, não "${values.port}"`);
+    const uiDir = fileURLToPath(new URL('./ui/', import.meta.url));
+    if (!existsSync(join(uiDir, 'index.html'))) throw new ProjectError(`UI não encontrada em ${uiDir}: rode npm run build`);
+
+    const dashboard = await startServer({ root, port, uiDir }).catch((err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') throw new ProjectError(`a porta ${port} já está em uso: escolha outra com --port <n> (0 pega uma livre)`);
+      throw err;
+    });
+    const { projects } = await dashboard.scan();
+    const count = `${projects.length} ${projects.length === 1 ? 'projeto' : 'projetos'}`;
+    console.log(`painel em ${dashboard.url} (${count}; Ctrl+C encerra)`);
+    if (!values['no-open']) openBrowser(dashboard.url);
+
+    const shutdown = () => {
+      void dashboard.close().then(() => process.exit(0));
+    };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
+    return 0;
+  },
+
   hooks(args) {
     const [sub, ...rest] = args;
     if (rest.length || (sub !== 'install' && sub !== 'uninstall')) throw new UsageError('uso: builderdev hooks install | uninstall');
@@ -325,9 +362,21 @@ function onPath(name: string): boolean {
     .some((dir) => existsSync(join(dir, name)) || existsSync(join(dir, `${name}.exe`)));
 }
 
+/** Abre `url` no navegador padrão, sem esperar e sem falhar: a URL já foi impressa. */
+function openBrowser(url: string): void {
+  // No Windows, `start` é interno do cmd; o "" é o título da janela, que senão seria a URL.
+  const [cmd, args, verbatim] =
+    process.platform === 'win32'
+      ? ['cmd', ['/d', '/c', 'start', '""', url], true]
+      : [process.platform === 'darwin' ? 'open' : 'xdg-open', [url], false];
+  const child = spawn(cmd, args, { stdio: 'ignore', detached: true, windowsHide: true, windowsVerbatimArguments: verbatim });
+  child.on('error', () => console.error('aviso: não deu para abrir o navegador; abra a URL acima'));
+  child.unref();
+}
+
 class UsageError extends Error {}
 
-function main(argv: string[]): number {
+async function main(argv: string[]): Promise<number> {
   const [name, ...rest] = argv;
   if (!name || name === '-h' || name === '--help' || name === 'help') {
     console.log(USAGE);
@@ -343,7 +392,7 @@ function main(argv: string[]): number {
     return 2;
   }
   try {
-    return command(rest);
+    return await command(rest);
   } catch (err) {
     // parseArgs lança TypeError com code ERR_PARSE_ARGS_* para opções inválidas.
     const code = (err as { code?: string }).code ?? '';
@@ -359,4 +408,4 @@ function main(argv: string[]): number {
   }
 }
 
-process.exitCode = main(process.argv.slice(2));
+process.exitCode = await main(process.argv.slice(2));
